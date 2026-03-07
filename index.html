@@ -3,31 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Objeto 3D</title>
 
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
 <style>
-
 html,body{
-margin:0;
-width:100%;
-height:100%;
-overflow:hidden;
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
 }
 
 #slider{
-display:flex;
-width:300%;
-height:100%;
-transition:transform 0.8s ease;
+  display:flex;
+  width:300%;
+  height:100%;
+  transition:transform 0.35s ease;
 }
 
 .page{
-width:100vw;
-height:100vh;
-position:relative;
+  width:100vw;
+  height:100vh;
+  position:relative;
+  flex:0 0 100vw;
+  overflow:hidden;
 }
 
 #page1{ background:yellow; }
@@ -35,63 +35,55 @@ position:relative;
 #page3{ background:#ffb347; }
 
 model-viewer{
-width:100%;
-height:100%;
+  width:100%;
+  height:100%;
+  background:transparent;
 }
-
-/* BOTON GRANDE */
 
 .arrow{
-position:absolute;
-top:50%;
-transform:translateY(-50%);
-width:150px;
-height:150px;
-cursor:pointer;
-display:flex;
-align-items:center;
-justify-content:center;
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:150px;
+  height:150px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
 }
-
-/* TRIANGULO */
 
 .arrow::before{
-content:"";
-width:0;
-height:0;
-border-top:25px solid transparent;
-border-bottom:25px solid transparent;
-border-left:40px solid black;
-opacity:0.2;
-transition:opacity .3s ease, transform .25s ease;
-transform:scale(0.2);
+  content:"";
+  width:0;
+  height:0;
+  border-top:25px solid transparent;
+  border-bottom:25px solid transparent;
+  border-left:40px solid black;
+  opacity:0.2;
+  transition:opacity .3s ease, transform .25s ease;
+  transform:scale(0.2);
 }
-
-/* hover */
 
 .arrow:hover::before{
-opacity:1;
-transform:scale(0.23);
+  opacity:1;
+  transform:scale(0.23);
 }
 
-/* posiciones */
-
-.right{
-right:20px;
-}
-
-.left{
-left:20px;
-}
+.right{ right:20px; }
+.left{ left:20px; }
 
 .left::before{
-transform:scale(0.2) rotate(180deg);
+  transform:scale(0.2) rotate(180deg);
 }
 
 .left:hover::before{
-transform:scale(0.23) rotate(180deg);
+  transform:scale(0.23) rotate(180deg);
 }
 
+#videoFuente{
+  display:none;
+}
 </style>
 </head>
 
@@ -106,9 +98,7 @@ src="earth plateada.glb"
 camera-controls
 auto-rotate
 shadow-intensity="1"
-exposure="1"
-animation-name="*"
-autoplay>
+exposure="1">
 </model-viewer>
 
 <div class="arrow right" id="to2"></div>
@@ -117,38 +107,81 @@ autoplay>
 
 <div class="page" id="page2">
 
+<model-viewer
+id="cine"
+src="pantalla_cine.glb"
+camera-controls
+shadow-intensity="1"
+exposure="1.2"
+environment-image="neutral"
+camera-orbit="0deg 88deg 13.3m"
+min-camera-orbit="auto auto 11m"
+max-camera-orbit="auto auto 18m"
+field-of-view="60deg"
+interaction-prompt="none"
+rotation="0 180 0">
+</model-viewer>
+
 <div class="arrow left" id="back1"></div>
 <div class="arrow right" id="to3"></div>
 
 </div>
 
 <div class="page" id="page3">
-
 <div class="arrow left" id="back2"></div>
-
 </div>
 
 </div>
+
+<video
+id="videoFuente"
+src="VIDEOS/bite_norma_desmond_1.webm"
+loop
+muted
+autoplay
+playsinline
+crossorigin="anonymous">
+</video>
 
 <script>
 
 const slider = document.getElementById("slider");
 
-document.getElementById("to2").onclick = () =>{
-slider.style.transform="translateX(-100vw)";
+document.getElementById("to2").onclick = () => {
+slider.style.transform = "translateX(-100vw)";
 };
 
-document.getElementById("back1").onclick = () =>{
-slider.style.transform="translateX(0)";
+document.getElementById("back1").onclick = () => {
+slider.style.transform = "translateX(0)";
 };
 
-document.getElementById("to3").onclick = () =>{
-slider.style.transform="translateX(-200vw)";
+document.getElementById("to3").onclick = () => {
+slider.style.transform = "translateX(-200vw)";
 };
 
-document.getElementById("back2").onclick = () =>{
-slider.style.transform="translateX(-100vw)";
+document.getElementById("back2").onclick = () => {
+slider.style.transform = "translateX(-100vw)";
 };
+
+const cine = document.getElementById("cine");
+const video = document.getElementById("videoFuente");
+
+cine.addEventListener("load", async () => {
+
+await video.play().catch(()=>{});
+
+const videoTexture = await cine.createTexture(video);
+
+const material = cine.model.materials[0];
+
+material.pbrMetallicRoughness.baseColorTexture.setTexture(videoTexture);
+
+material.setEmissiveFactor([1,1,1]);
+
+material.pbrMetallicRoughness.setMetallicFactor(0);
+material.pbrMetallicRoughness.setRoughnessFactor(1);
+
+});
 
 </script>
 
