@@ -1,14 +1,5 @@
-html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  overflow: hidden;
-}
+const modelo = document.getElementById("globo");
 
-model-viewer {
-  width: 100%;
-  height: 100%;
-  background: yellow;
-  display: block;
-}
+// Por ahora no hace nada extra.
+// Lo dejamos listo para que después agreguemos interacciones.
+console.log("Modelo cargado:", modelo);

@@ -1,27 +1,156 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objeto 3D</title>
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <model-viewer
-    id="globo"
-    src="earth plateada.glb"
-    alt="Objeto 3D"
-    camera-controls
-    auto-rotate
-    disable-pan
-    shadow-intensity="1"
-    exposure="1"
-    animation-name="*"
-    autoplay
-    ar>
-  </model-viewer>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <script src="script.js"></script>
+<title>Objeto 3D</title>
+
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<style>
+
+html,body{
+margin:0;
+width:100%;
+height:100%;
+overflow:hidden;
+}
+
+#slider{
+display:flex;
+width:300%;
+height:100%;
+transition:transform 0.8s ease;
+}
+
+.page{
+width:100vw;
+height:100vh;
+position:relative;
+}
+
+#page1{ background:yellow; }
+#page2{ background:orange; }
+#page3{ background:#ffb347; }
+
+model-viewer{
+width:100%;
+height:100%;
+}
+
+/* BOTON GRANDE */
+
+.arrow{
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+width:150px;
+height:150px;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+/* TRIANGULO */
+
+.arrow::before{
+content:"";
+width:0;
+height:0;
+border-top:25px solid transparent;
+border-bottom:25px solid transparent;
+border-left:40px solid black;
+opacity:0.2;
+transition:opacity .3s ease, transform .25s ease;
+transform:scale(0.2);
+}
+
+/* hover */
+
+.arrow:hover::before{
+opacity:1;
+transform:scale(0.23);
+}
+
+/* posiciones */
+
+.right{
+right:20px;
+}
+
+.left{
+left:20px;
+}
+
+.left::before{
+transform:scale(0.2) rotate(180deg);
+}
+
+.left:hover::before{
+transform:scale(0.23) rotate(180deg);
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="slider">
+
+<div class="page" id="page1">
+
+<model-viewer
+src="earth plateada.glb"
+camera-controls
+auto-rotate
+shadow-intensity="1"
+exposure="1"
+animation-name="*"
+autoplay>
+</model-viewer>
+
+<div class="arrow right" id="to2"></div>
+
+</div>
+
+<div class="page" id="page2">
+
+<div class="arrow left" id="back1"></div>
+<div class="arrow right" id="to3"></div>
+
+</div>
+
+<div class="page" id="page3">
+
+<div class="arrow left" id="back2"></div>
+
+</div>
+
+</div>
+
+<script>
+
+const slider = document.getElementById("slider");
+
+document.getElementById("to2").onclick = () =>{
+slider.style.transform="translateX(-100vw)";
+};
+
+document.getElementById("back1").onclick = () =>{
+slider.style.transform="translateX(0)";
+};
+
+document.getElementById("to3").onclick = () =>{
+slider.style.transform="translateX(-200vw)";
+};
+
+document.getElementById("back2").onclick = () =>{
+slider.style.transform="translateX(-100vw)";
+};
+
+</script>
+
 </body>
 </html>
