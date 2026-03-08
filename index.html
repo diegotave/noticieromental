@@ -8,6 +8,7 @@
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
 <style>
+
 html,body{
   margin:0;
   width:100%;
@@ -31,13 +32,20 @@ html,body{
 }
 
 #page1{ background:yellow; }
-#page2{ background:orange; }
+#page2{ background:black; }
 #page3{ background:#ffb347; }
 
 model-viewer{
   width:100%;
   height:100%;
   background:transparent;
+}
+
+#video2{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
 
 .arrow{
@@ -57,33 +65,35 @@ model-viewer{
   content:"";
   width:0;
   height:0;
-  border-top:25px solid transparent;
-  border-bottom:25px solid transparent;
-  border-left:40px solid black;
-  opacity:0.2;
+  border-top:50px solid transparent;
+  border-bottom:50px solid transparent;
+  border-left:80px solid black;
+  opacity:0.75;
   transition:opacity .3s ease, transform .25s ease;
-  transform:scale(0.2);
+  transform:scale(0.4);
 }
 
 .arrow:hover::before{
   opacity:1;
-  transform:scale(0.23);
+  transform:scale(0.45);
 }
 
-.right{ right:20px; }
-.left{ left:20px; }
+.right{
+  right:20px;
+}
+
+.left{
+  left:20px;
+}
 
 .left::before{
-  transform:scale(0.2) rotate(180deg);
+  transform:scale(0.4) rotate(180deg);
 }
 
 .left:hover::before{
-  transform:scale(0.23) rotate(180deg);
+  transform:scale(0.45) rotate(180deg);
 }
 
-#videoFuente{
-  display:none;
-}
 </style>
 </head>
 
@@ -97,6 +107,8 @@ model-viewer{
 src="earth plateada.glb"
 camera-controls
 auto-rotate
+auto-rotate-delay="0"
+autoplay
 shadow-intensity="1"
 exposure="1">
 </model-viewer>
@@ -107,20 +119,15 @@ exposure="1">
 
 <div class="page" id="page2">
 
-<model-viewer
-id="cine"
-src="pantalla_cine.glb"
-camera-controls
-shadow-intensity="1"
-exposure="1.2"
-environment-image="neutral"
-camera-orbit="0deg 88deg 13.3m"
-min-camera-orbit="auto auto 11m"
-max-camera-orbit="auto auto 18m"
-field-of-view="60deg"
-interaction-prompt="none"
-rotation="0 180 0">
-</model-viewer>
+<video
+id="video2"
+src="VIDEOS/NO_VALORAMOS.webm"
+autoplay
+loop
+muted
+playsinline
+preload="auto">
+</video>
 
 <div class="arrow left" id="back1"></div>
 <div class="arrow right" id="to3"></div>
@@ -128,60 +135,35 @@ rotation="0 180 0">
 </div>
 
 <div class="page" id="page3">
+
 <div class="arrow left" id="back2"></div>
-</div>
 
 </div>
 
-<video
-id="videoFuente"
-src="VIDEOS/bite_norma_desmond_1.webm"
-loop
-muted
-autoplay
-playsinline
-crossorigin="anonymous">
-</video>
+</div>
 
 <script>
 
 const slider = document.getElementById("slider");
+const video2 = document.getElementById("video2");
 
 document.getElementById("to2").onclick = () => {
-slider.style.transform = "translateX(-100vw)";
+  slider.style.transform = "translateX(-100vw)";
+  video2.play().catch(()=>{});
 };
 
 document.getElementById("back1").onclick = () => {
-slider.style.transform = "translateX(0)";
+  slider.style.transform = "translateX(0)";
 };
 
 document.getElementById("to3").onclick = () => {
-slider.style.transform = "translateX(-200vw)";
+  slider.style.transform = "translateX(-200vw)";
 };
 
 document.getElementById("back2").onclick = () => {
-slider.style.transform = "translateX(-100vw)";
+  slider.style.transform = "translateX(-100vw)";
+  video2.play().catch(()=>{});
 };
-
-const cine = document.getElementById("cine");
-const video = document.getElementById("videoFuente");
-
-cine.addEventListener("load", async () => {
-
-await video.play().catch(()=>{});
-
-const videoTexture = await cine.createTexture(video);
-
-const material = cine.model.materials[0];
-
-material.pbrMetallicRoughness.baseColorTexture.setTexture(videoTexture);
-
-material.setEmissiveFactor([1,1,1]);
-
-material.pbrMetallicRoughness.setMetallicFactor(0);
-material.pbrMetallicRoughness.setRoughnessFactor(1);
-
-});
 
 </script>
 
