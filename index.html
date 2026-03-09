@@ -25,7 +25,6 @@ html,body{
 
 #slider{
   display:flex;
-  width:400%;
   height:100svh;
   height:100dvh;
   transition:transform 0.35s ease;
@@ -41,11 +40,38 @@ html,body{
 }
 
 #page1{ background:yellow; }
-#page2{ background:black; }
-#page3{ background:black; }
-#page4{ background:black; }
+
+.video-page{
+  background:black;
+}
 
 model-viewer{
+  width:100%;
+  height:100%;
+  background:transparent;
+}
+
+/* LOGO BUG */
+
+#logobug{
+  position:fixed;
+  top:20px;
+  right:20px;
+  width:150px;
+  height:150px;
+  z-index:9999;
+  pointer-events:none;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity 0.25s ease, visibility 0.25s ease;
+}
+
+#logobug.show{
+  opacity:1;
+  visibility:visible;
+}
+
+#logobug model-viewer{
   width:100%;
   height:100%;
   background:transparent;
@@ -72,9 +98,7 @@ model-viewer{
   background:black;
 }
 
-#video2,
-#video3,
-#video4{
+.video-el{
   width:100%;
   height:100%;
   display:block;
@@ -137,6 +161,13 @@ model-viewer{
     border-bottom:24px solid transparent;
     border-left:38px solid rgba(255,255,255,0.75);
   }
+
+  #logobug{
+    width:120px;
+    height:120px;
+    top:16px;
+    right:16px;
+  }
 }
 
 /* TELEFONO / TABLET VERTICAL
@@ -151,9 +182,7 @@ model-viewer{
     max-height:100svh;
   }
 
-  #video2,
-  #video3,
-  #video4{
+  .video-el{
     width:100%;
     height:100%;
     object-fit:cover;
@@ -172,12 +201,33 @@ model-viewer{
 
   .right{ right:10px; }
   .left{ left:10px; }
+
+  #logobug{
+    width:90px;
+    height:90px;
+    top:12px;
+    right:12px;
+  }
 }
 
 </style>
 </head>
 
 <body>
+
+<div id="logobug">
+  <model-viewer
+    src="earth plateada.glb"
+    auto-rotate
+    auto-rotate-delay="0"
+    autoplay
+    exposure="1"
+    shadow-intensity="0"
+    interaction-prompt="none"
+    disable-zoom
+    disable-pan>
+  </model-viewer>
+</div>
 
 <div id="slider">
 
@@ -193,86 +243,83 @@ model-viewer{
       exposure="1">
     </model-viewer>
 
-    <div class="arrow right" id="to2"></div>
-
-  </div>
-
-
-  <div class="page" id="page2">
-
-    <div class="video-frame">
-      <div class="video-shell">
-
-        <video
-          id="video2"
-          data-src="VIDEOS/NO_VALORAMOS.webm"
-          loop
-          muted
-          playsinline
-          preload="none">
-        </video>
-
-      </div>
-    </div>
-
-    <div class="arrow left" id="back1"></div>
-    <div class="arrow right" id="to3"></div>
-
-  </div>
-
-
-  <div class="page" id="page3">
-
-    <div class="video-frame">
-      <div class="video-shell">
-
-        <video
-          id="video3"
-          data-src="VIDEOS/Iambig.webm"
-          loop
-          playsinline
-          preload="none">
-        </video>
-
-      </div>
-    </div>
-
-    <div class="arrow left" id="back2"></div>
-    <div class="arrow right" id="to4"></div>
-
-  </div>
-
-
-  <div class="page" id="page4">
-
-    <div class="video-frame">
-      <div class="video-shell">
-
-        <video
-          id="video4"
-          data-src="VIDEOS/tuprimomarvin.webm"
-          loop
-          playsinline
-          preload="none">
-        </video>
-
-      </div>
-    </div>
-
-    <div class="arrow left" id="back3"></div>
-    <div class="arrow right" id="home4"></div>
+    <div class="arrow right" id="toFirstVideo"></div>
 
   </div>
 
 </div>
 
-
 <script>
 
+/*
+  EL PRIMERO DE ESTA LISTA ES EL VIDEO MAS NUEVO.
+  SI AGREGAS UNO NUEVO, PONERLO ARRIBA DE TODO.
+*/
+const videosData = [
+  { src: "VIDEOS/tuprimomarvin.webm", muted: false },
+  { src: "VIDEOS/NO_VALORAMOS.webm", muted: true },
+  { src: "VIDEOS/Iambig.webm", muted: false }
+];
+
 const slider = document.getElementById("slider");
-const video2 = document.getElementById("video2");
-const video3 = document.getElementById("video3");
-const video4 = document.getElementById("video4");
+const logobug = document.getElementById("logobug");
+
+function createVideoPages(){
+  videosData.forEach((videoData, i) => {
+    const pageNumber = i + 2;
+
+    const page = document.createElement("div");
+    page.className = "page video-page";
+    page.id = `page${pageNumber}`;
+
+    const videoFrame = document.createElement("div");
+    videoFrame.className = "video-frame";
+
+    const videoShell = document.createElement("div");
+    videoShell.className = "video-shell";
+
+    const video = document.createElement("video");
+    video.className = "video-el";
+    video.id = `video${pageNumber}`;
+    video.dataset.src = videoData.src;
+    video.setAttribute("loop", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("preload", "none");
+
+    if(videoData.muted){
+      video.muted = true;
+      video.setAttribute("muted", "");
+    }
+
+    videoShell.appendChild(video);
+    videoFrame.appendChild(videoShell);
+    page.appendChild(videoFrame);
+
+    const leftArrow = document.createElement("div");
+    leftArrow.className = "arrow left";
+    leftArrow.dataset.target = pageNumber - 1;
+    page.appendChild(leftArrow);
+
+    const rightArrow = document.createElement("div");
+    rightArrow.className = "arrow right";
+
+    if(i === videosData.length - 1){
+      rightArrow.dataset.target = 1;
+    } else {
+      rightArrow.dataset.target = pageNumber + 1;
+    }
+
+    page.appendChild(rightArrow);
+    slider.appendChild(page);
+  });
+}
+
+createVideoPages();
+
+const totalPages = 1 + videosData.length;
+slider.style.width = `${totalPages * 100}%`;
+
+const allVideos = Array.from(document.querySelectorAll(".video-el"));
 
 function loadVideo(video){
   if (!video.getAttribute("src")) {
@@ -287,49 +334,57 @@ function unloadVideo(video){
   video.load();
 }
 
-function goToPage1(){
-  slider.style.transform = "translateX(0)";
-  unloadVideo(video2);
-  unloadVideo(video3);
-  unloadVideo(video4);
+function unloadAllVideos(){
+  allVideos.forEach(unloadVideo);
 }
 
-function goToPage2(){
-  slider.style.transform = "translateX(-100vw)";
-  unloadVideo(video3);
-  unloadVideo(video4);
-  loadVideo(video2);
-  video2.muted = true;
-  video2.play().catch(()=>{});
+function updateLogobug(pageNumber){
+  if(pageNumber === 1){
+    logobug.classList.remove("show");
+  } else {
+    logobug.classList.add("show");
+  }
 }
 
-function goToPage3(){
-  slider.style.transform = "translateX(-200vw)";
-  unloadVideo(video2);
-  unloadVideo(video4);
-  loadVideo(video3);
-  video3.muted = false;
-  video3.volume = 1;
-  video3.play().catch(()=>{});
+function goToPage(pageNumber){
+  const offset = (pageNumber - 1) * 100;
+  slider.style.transform = `translateX(-${offset}vw)`;
+
+  unloadAllVideos();
+
+  if(pageNumber >= 2){
+    const currentVideo = document.getElementById(`video${pageNumber}`);
+    const videoConfig = videosData[pageNumber - 2];
+
+    if(currentVideo){
+      loadVideo(currentVideo);
+      currentVideo.muted = !!videoConfig.muted;
+      currentVideo.volume = videoConfig.muted ? 0 : 1;
+      currentVideo.play().catch(()=>{});
+    }
+  }
+
+  updateLogobug(pageNumber);
 }
 
-function goToPage4(){
-  slider.style.transform = "translateX(-300vw)";
-  unloadVideo(video2);
-  unloadVideo(video3);
-  loadVideo(video4);
-  video4.muted = false;
-  video4.volume = 1;
-  video4.play().catch(()=>{});
-}
+document.getElementById("toFirstVideo").onclick = () => {
+  if(videosData.length > 0){
+    goToPage(2);
+  }
+};
 
-document.getElementById("to2").onclick = goToPage2;
-document.getElementById("back1").onclick = goToPage1;
-document.getElementById("to3").onclick = goToPage3;
-document.getElementById("back2").onclick = goToPage2;
-document.getElementById("to4").onclick = goToPage4;
-document.getElementById("back3").onclick = goToPage3;
-document.getElementById("home4").onclick = goToPage1;
+document.addEventListener("click", (e) => {
+  const arrow = e.target.closest(".arrow");
+  if(!arrow) return;
+
+  const target = Number(arrow.dataset.target);
+  if(target){
+    goToPage(target);
+  }
+});
+
+/* ARRANCA EN EL INDEX Y EL LOGOBUG NO APARECE AHI */
+goToPage(1);
 
 </script>
 
