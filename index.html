@@ -33,7 +33,13 @@ html,body{
 
 #page1{ background:yellow; }
 #page2{ background:black; }
-#page3{ background:#ffb347; }
+
+#page3{
+  background:black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
 model-viewer{
   width:100%;
@@ -48,12 +54,23 @@ model-viewer{
   display:block;
 }
 
+#video3{
+  width:100vw;
+  height:100vh;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  display:block;
+}
+
+/* FLECHAS */
+
 .arrow{
   position:absolute;
   top:50%;
   transform:translateY(-50%);
-  width:150px;
-  height:150px;
+  width:120px;
+  height:120px;
   cursor:pointer;
   display:flex;
   align-items:center;
@@ -65,17 +82,17 @@ model-viewer{
   content:"";
   width:0;
   height:0;
-  border-top:50px solid transparent;
-  border-bottom:50px solid transparent;
-  border-left:80px solid black;
+  border-top:30px solid transparent;
+  border-bottom:30px solid transparent;
+  border-left:48px solid rgba(255,255,255,0.75);
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+  transition:opacity .25s ease, transform .25s ease;
   opacity:0.75;
-  transition:opacity .3s ease, transform .25s ease;
-  transform:scale(0.4);
 }
 
 .arrow:hover::before{
   opacity:1;
-  transform:scale(0.45);
+  transform:scale(1.08);
 }
 
 .right{
@@ -87,11 +104,11 @@ model-viewer{
 }
 
 .left::before{
-  transform:scale(0.4) rotate(180deg);
+  transform:rotate(180deg);
 }
 
 .left:hover::before{
-  transform:scale(0.45) rotate(180deg);
+  transform:rotate(180deg) scale(1.08);
 }
 
 </style>
@@ -136,7 +153,16 @@ preload="auto">
 
 <div class="page" id="page3">
 
+<video
+id="video3"
+src="VIDEOS/Iambig.webm"
+loop
+playsinline
+preload="metadata">
+</video>
+
 <div class="arrow left" id="back2"></div>
+<div class="arrow right" id="home3"></div>
 
 </div>
 
@@ -146,24 +172,35 @@ preload="auto">
 
 const slider = document.getElementById("slider");
 const video2 = document.getElementById("video2");
+const video3 = document.getElementById("video3");
 
-document.getElementById("to2").onclick = () => {
-  slider.style.transform = "translateX(-100vw)";
-  video2.play().catch(()=>{});
-};
-
-document.getElementById("back1").onclick = () => {
+function goToPage1(){
   slider.style.transform = "translateX(0)";
-};
+  video2.pause();
+  video3.pause();
+  video3.currentTime = 0;
+}
 
-document.getElementById("to3").onclick = () => {
-  slider.style.transform = "translateX(-200vw)";
-};
-
-document.getElementById("back2").onclick = () => {
+function goToPage2(){
   slider.style.transform = "translateX(-100vw)";
+  video3.pause();
+  video3.currentTime = 0;
   video2.play().catch(()=>{});
-};
+}
+
+function goToPage3(){
+  slider.style.transform = "translateX(-200vw)";
+  video2.pause();
+  video3.muted = false;
+  video3.volume = 1;
+  video3.play().catch(()=>{});
+}
+
+document.getElementById("to2").onclick = goToPage2;
+document.getElementById("back1").onclick = goToPage1;
+document.getElementById("to3").onclick = goToPage3;
+document.getElementById("back2").onclick = goToPage2;
+document.getElementById("home3").onclick = goToPage1;
 
 </script>
 
