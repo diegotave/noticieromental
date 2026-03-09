@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+
 <title>Objeto 3D</title>
 
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
 <style>
+
 html,body{
   margin:0;
   width:100%;
@@ -19,13 +26,13 @@ html,body{
 #slider{
   display:flex;
   width:300%;
-  height:100%;
+  height:100dvh;
   transition:transform 0.35s ease;
 }
 
 .page{
   width:100vw;
-  height:100vh;
+  height:100dvh;
   position:relative;
   flex:0 0 100vw;
   overflow:hidden;
@@ -41,7 +48,7 @@ model-viewer{
   background:transparent;
 }
 
-/* CONTENEDORES DE VIDEO */
+/* VIDEO FRAME */
 
 .video-frame{
   position:absolute;
@@ -55,7 +62,7 @@ model-viewer{
 
 .video-shell{
   position:relative;
-  width:min(100vw, calc(100vh * 16 / 9));
+  width:min(100vw, calc(100dvh * 16 / 9));
   aspect-ratio:16 / 9;
   overflow:hidden;
   background:black;
@@ -67,7 +74,6 @@ model-viewer{
   height:100%;
   display:block;
   object-fit:cover;
-  background:black;
 }
 
 /* FLECHAS */
@@ -113,49 +119,32 @@ model-viewer{
   transform:rotate(180deg) scale(1.08);
 }
 
-/* TABLET */
-@media (max-width: 1024px){
-  .arrow{
-    width:96px;
-    height:96px;
-  }
+/* TELEFONO */
 
-  .arrow::before{
-    border-top:24px solid transparent;
-    border-bottom:24px solid transparent;
-    border-left:38px solid rgba(255,255,255,0.75);
-  }
+@media (orientation: portrait) and (max-width:900px){
+
+.video-shell{
+  width:100vw;
+  height:100dvh;
+  aspect-ratio:auto;
 }
 
-/* TELEFONO VERTICAL */
-@media (orientation: portrait) and (max-width: 900px){
-  .video-shell{
-    width:100vw;
-    height:100vh;
-    aspect-ratio:auto;
-  }
-
-  #video2,
-  #video3{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
-
-  .arrow{
-    width:82px;
-    height:82px;
-  }
-
-  .arrow::before{
-    border-top:20px solid transparent;
-    border-bottom:20px solid transparent;
-    border-left:32px solid rgba(255,255,255,0.75);
-  }
-
-  .right{ right:10px; }
-  .left{ left:10px; }
+.arrow{
+  width:82px;
+  height:82px;
 }
+
+.arrow::before{
+  border-top:20px solid transparent;
+  border-bottom:20px solid transparent;
+  border-left:32px solid rgba(255,255,255,0.75);
+}
+
+.right{ right:10px; }
+.left{ left:10px; }
+
+}
+
 </style>
 </head>
 
@@ -163,58 +152,72 @@ model-viewer{
 
 <div id="slider">
 
-  <div class="page" id="page1">
-    <model-viewer
-      src="earth plateada.glb"
-      camera-controls
-      auto-rotate
-      auto-rotate-delay="0"
-      autoplay
-      shadow-intensity="1"
-      exposure="1">
-    </model-viewer>
+<div class="page" id="page1">
 
-    <div class="arrow right" id="to2"></div>
-  </div>
+<model-viewer
+src="earth plateada.glb"
+camera-controls
+auto-rotate
+auto-rotate-delay="0"
+autoplay
+shadow-intensity="1"
+exposure="1">
+</model-viewer>
 
-  <div class="page" id="page2">
-    <div class="video-frame">
-      <div class="video-shell">
-        <video
-          id="video2"
-          data-src="VIDEOS/NO_VALORAMOS.webm"
-          loop
-          muted
-          playsinline
-          preload="none">
-        </video>
-      </div>
-    </div>
-
-    <div class="arrow left" id="back1"></div>
-    <div class="arrow right" id="to3"></div>
-  </div>
-
-  <div class="page" id="page3">
-    <div class="video-frame">
-      <div class="video-shell">
-        <video
-          id="video3"
-          data-src="VIDEOS/Iambig.webm"
-          loop
-          playsinline
-          preload="none">
-        </video>
-      </div>
-    </div>
-
-    <div class="arrow left" id="back2"></div>
-    <div class="arrow right" id="home3"></div>
-  </div>
+<div class="arrow right" id="to2"></div>
 
 </div>
 
+
+<div class="page" id="page2">
+
+<div class="video-frame">
+<div class="video-shell">
+
+<video
+id="video2"
+data-src="VIDEOS/NO_VALORAMOS.webm"
+loop
+muted
+playsinline
+preload="none">
+</video>
+
+</div>
+</div>
+
+<div class="arrow left" id="back1"></div>
+<div class="arrow right" id="to3"></div>
+
+</div>
+
+
+<div class="page" id="page3">
+
+<div class="video-frame">
+<div class="video-shell">
+
+<video
+id="video3"
+data-src="VIDEOS/Iambig.webm"
+loop
+playsinline
+preload="none">
+</video>
+
+</div>
+</div>
+
+<div class="arrow left" id="back2"></div>
+<div class="arrow right" id="home3"></div>
+
+</div>
+
+</div>
+
+
 <script>
+
 const slider = document.getElementById("slider");
 const video2 = document.getElementById("video2");
 const video3 = document.getElementById("video3");
@@ -260,6 +263,22 @@ document.getElementById("back1").onclick = goToPage1;
 document.getElementById("to3").onclick = goToPage3;
 document.getElementById("back2").onclick = goToPage2;
 document.getElementById("home3").onclick = goToPage1;
+
+
+/* FULLSCREEN PARA ANDROID */
+
+function enterFullscreen(){
+
+const el = document.documentElement;
+
+if (el.requestFullscreen) el.requestFullscreen();
+else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+else if (el.msRequestFullscreen) el.msRequestFullscreen();
+
+}
+
+document.addEventListener("click", enterFullscreen, { once:true });
+
 </script>
 
 </body>
