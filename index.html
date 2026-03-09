@@ -25,7 +25,7 @@ html,body{
 
 #slider{
   display:flex;
-  width:300%;
+  width:400%;
   height:100svh;
   height:100dvh;
   transition:transform 0.35s ease;
@@ -43,6 +43,7 @@ html,body{
 #page1{ background:yellow; }
 #page2{ background:black; }
 #page3{ background:black; }
+#page4{ background:black; }
 
 model-viewer{
   width:100%;
@@ -72,7 +73,8 @@ model-viewer{
 }
 
 #video2,
-#video3{
+#video3,
+#video4{
   width:100%;
   height:100%;
   display:block;
@@ -150,7 +152,8 @@ model-viewer{
   }
 
   #video2,
-  #video3{
+  #video3,
+  #video4{
     width:100%;
     height:100%;
     object-fit:cover;
@@ -235,7 +238,29 @@ model-viewer{
     </div>
 
     <div class="arrow left" id="back2"></div>
-    <div class="arrow right" id="home3"></div>
+    <div class="arrow right" id="to4"></div>
+
+  </div>
+
+
+  <div class="page" id="page4">
+
+    <div class="video-frame">
+      <div class="video-shell">
+
+        <video
+          id="video4"
+          data-src="VIDEOS/tuprimomarvin.webm"
+          loop
+          playsinline
+          preload="none">
+        </video>
+
+      </div>
+    </div>
+
+    <div class="arrow left" id="back3"></div>
+    <div class="arrow right" id="home4"></div>
 
   </div>
 
@@ -247,6 +272,7 @@ model-viewer{
 const slider = document.getElementById("slider");
 const video2 = document.getElementById("video2");
 const video3 = document.getElementById("video3");
+const video4 = document.getElementById("video4");
 
 function loadVideo(video){
   if (!video.getAttribute("src")) {
@@ -265,11 +291,13 @@ function goToPage1(){
   slider.style.transform = "translateX(0)";
   unloadVideo(video2);
   unloadVideo(video3);
+  unloadVideo(video4);
 }
 
 function goToPage2(){
   slider.style.transform = "translateX(-100vw)";
   unloadVideo(video3);
+  unloadVideo(video4);
   loadVideo(video2);
   video2.muted = true;
   video2.play().catch(()=>{});
@@ -278,17 +306,30 @@ function goToPage2(){
 function goToPage3(){
   slider.style.transform = "translateX(-200vw)";
   unloadVideo(video2);
+  unloadVideo(video4);
   loadVideo(video3);
   video3.muted = false;
   video3.volume = 1;
   video3.play().catch(()=>{});
 }
 
+function goToPage4(){
+  slider.style.transform = "translateX(-300vw)";
+  unloadVideo(video2);
+  unloadVideo(video3);
+  loadVideo(video4);
+  video4.muted = false;
+  video4.volume = 1;
+  video4.play().catch(()=>{});
+}
+
 document.getElementById("to2").onclick = goToPage2;
 document.getElementById("back1").onclick = goToPage1;
 document.getElementById("to3").onclick = goToPage3;
 document.getElementById("back2").onclick = goToPage2;
-document.getElementById("home3").onclick = goToPage1;
+document.getElementById("to4").onclick = goToPage4;
+document.getElementById("back3").onclick = goToPage3;
+document.getElementById("home4").onclick = goToPage1;
 
 </script>
 
