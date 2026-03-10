@@ -179,7 +179,7 @@ model-viewer{
   white-space:nowrap;
   transform:translateY(-50%);
   animation:crawlMove 16s linear infinite;
-  color:black;
+  color:white;
   font-size:clamp(22px, 3vw, 42px);
   font-weight:400;
   letter-spacing:.02em;
@@ -195,7 +195,7 @@ model-viewer{
 .weather-frame{
   position:absolute;
   inset:0;
-  border:.95vw solid black;
+  border:.95vw solid white;
   box-sizing:border-box;
   z-index:2;
   pointer-events:none;
@@ -220,7 +220,7 @@ model-viewer{
   font-size:clamp(150px, 33vw, 470px);
   line-height:.82;
   font-weight:400;
-  color:black;
+  color:white;
   letter-spacing:-0.06em;
   transform-origin:right bottom;
   text-shadow:0 4px 12px rgba(var(--shadow-rgb),0.20);
@@ -233,7 +233,7 @@ model-viewer{
   transform:translateY(-50%);
   font-size:clamp(74px, 10vw, 150px);
   line-height:1;
-  color:black;
+  color:white;
   z-index:2;
   pointer-events:none;
   text-shadow:0 3px 10px rgba(var(--shadow-rgb),0.20);
@@ -247,7 +247,7 @@ model-viewer{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  color:black;
+  color:white;
   font-size:clamp(14px, 1.35vw, 20px);
   text-transform:uppercase;
   letter-spacing:.08em;
@@ -272,7 +272,7 @@ model-viewer{
   display:flex;
   align-items:center;
   justify-content:center;
-  color:black;
+  color: white;
   font-size:clamp(40px, 8vw, 90px);
   z-index:2;
   pointer-events:none;
@@ -284,7 +284,7 @@ model-viewer{
   left:8%;
   right:8%;
   bottom:16%;
-  color:black;
+  color:rgb(255, 255, 255);
   font-size:clamp(16px, 1.6vw, 24px);
   text-transform:uppercase;
   z-index:3;
@@ -450,7 +450,8 @@ model-viewer{
       shadow-intensity="1"
       exposure="1">
     </model-viewer>
-
+  
+    <div class="arrow left" id="toWeather"></div>
     <div class="arrow right" id="toFirstVideo"></div>
   </div>
 
@@ -829,6 +830,12 @@ function goToPage(page){
   maybeHandleWeatherPage(page);
 }
 
+document.getElementById("toWeather").onclick = ()=>{
+  if(weatherPageNumber){
+    goToPage(weatherPageNumber);
+  }
+};
+
 document.getElementById("toFirstVideo").onclick = ()=>{
   if(videosData.length > 0){
     goToPage(2);
@@ -838,6 +845,8 @@ document.getElementById("toFirstVideo").onclick = ()=>{
 document.addEventListener("click",(e)=>{
   const arrow = e.target.closest(".arrow");
   if(!arrow) return;
+
+  if(arrow.id === "toWeather" || arrow.id === "toFirstVideo") return;
 
   const target = Number(arrow.dataset.target);
   if(target){
