@@ -89,7 +89,6 @@ model-viewer{
   background:black;
 }
 
-/* EN DESKTOP/TABLET HORIZONTAL PRIORIZA 16:9 */
 .video-shell{
   position:relative;
   width:min(100vw, calc(100dvh * 16 / 9));
@@ -149,7 +148,6 @@ model-viewer{
   transform:rotate(180deg) scale(1.08);
 }
 
-/* TABLET */
 @media (max-width:1024px){
   .arrow{
     width:96px;
@@ -170,8 +168,6 @@ model-viewer{
   }
 }
 
-/* TELEFONO / TABLET VERTICAL
-   FULL ANCHURA, NO FULL ALTURA */
 @media (orientation:portrait){
 
   .video-shell{
@@ -252,13 +248,12 @@ model-viewer{
 <script>
 
 /*
-  EL PRIMERO DE ESTA LISTA ES EL VIDEO MAS NUEVO.
-  SI AGREGAS UNO NUEVO, PONERLO ARRIBA DE TODON. 
+EL PRIMERO ES EL VIDEO MAS NUEVO
 */
 const videosData = [
   { src: "VIDEOS/bitch3d.webm", muted: false },
   { src: "VIDEOS/tuprimomarvin.webm", muted: false },
-  { src: "VIDEOS/NO_VALORAMOS.webm", muted: false },
+  { src: "VIDEOS/NOVALORAMOSVERS02.webm", muted: false },
   { src: "VIDEOS/Iambig.webm", muted: false }
 ];
 
@@ -267,51 +262,54 @@ const logobug = document.getElementById("logobug");
 
 function createVideoPages(){
   videosData.forEach((videoData, i) => {
+
     const pageNumber = i + 2;
 
     const page = document.createElement("div");
     page.className = "page video-page";
     page.id = `page${pageNumber}`;
 
-    const videoFrame = document.createElement("div");
-    videoFrame.className = "video-frame";
+    const frame = document.createElement("div");
+    frame.className = "video-frame";
 
-    const videoShell = document.createElement("div");
-    videoShell.className = "video-shell";
+    const shell = document.createElement("div");
+    shell.className = "video-shell";
 
     const video = document.createElement("video");
     video.className = "video-el";
     video.id = `video${pageNumber}`;
     video.dataset.src = videoData.src;
-    video.setAttribute("loop", "");
-    video.setAttribute("playsinline", "");
-    video.setAttribute("preload", "none");
+    video.setAttribute("loop","");
+    video.setAttribute("playsinline","");
+    video.setAttribute("preload","none");
 
     if(videoData.muted){
       video.muted = true;
-      video.setAttribute("muted", "");
+      video.setAttribute("muted","");
     }
 
-    videoShell.appendChild(video);
-    videoFrame.appendChild(videoShell);
-    page.appendChild(videoFrame);
+    shell.appendChild(video);
+    frame.appendChild(shell);
+    page.appendChild(frame);
 
-    const leftArrow = document.createElement("div");
-    leftArrow.className = "arrow left";
-    leftArrow.dataset.target = pageNumber - 1;
-    page.appendChild(leftArrow);
+    const left = document.createElement("div");
+    left.className = "arrow left";
+    left.dataset.target = pageNumber - 1;
+    page.appendChild(left);
 
-    const rightArrow = document.createElement("div");
-    rightArrow.className = "arrow right";
+    const right = document.createElement("div");
+    right.className = "arrow right";
 
     if(i === videosData.length - 1){
-      rightArrow.dataset.target = 1;
+      right.dataset.target = 1;
     } else {
-      rightArrow.dataset.target = pageNumber + 1;
+      right.dataset.target = pageNumber + 1;
     }
 
-    page.appendChild(rightArrow);
+    page.appendChild(right);
+
     slider.appendChild(page);
+
   });
 }
 
@@ -323,7 +321,7 @@ slider.style.width = `${totalPages * 100}%`;
 const allVideos = Array.from(document.querySelectorAll(".video-el"));
 
 function loadVideo(video){
-  if (!video.getAttribute("src")) {
+  if(!video.getAttribute("src")){
     video.src = video.dataset.src;
     video.load();
   }
@@ -339,49 +337,56 @@ function unloadAllVideos(){
   allVideos.forEach(unloadVideo);
 }
 
-function updateLogobug(pageNumber){
-  if(pageNumber === 1){
+function updateLogobug(page){
+  if(page === 1){
     logobug.classList.remove("show");
-  } else {
+  }else{
     logobug.classList.add("show");
   }
 }
 
-function goToPage(pageNumber){
-  const offset = (pageNumber - 1) * 100;
+function goToPage(page){
+
+  const offset = (page-1)*100;
+
   slider.style.transform = `translateX(-${offset}vw)`;
 
   unloadAllVideos();
 
-  if(pageNumber >= 2){
-    const currentVideo = document.getElementById(`video${pageNumber}`);
-    const videoConfig = videosData[pageNumber - 2];
+  if(page >= 2){
 
-    if(currentVideo){
-      loadVideo(currentVideo);
-      currentVideo.muted = !!videoConfig.muted;
-      currentVideo.volume = videoConfig.muted ? 0 : 1;
-      currentVideo.play().catch(()=>{});
+    const video = document.getElementById(`video${page}`);
+    const config = videosData[page-2];
+
+    if(video){
+      loadVideo(video);
+      video.muted = !!config.muted;
+      video.volume = config.muted ? 0 : 1;
+      video.play().catch(()=>{});
     }
+
   }
 
-  updateLogobug(pageNumber);
+  updateLogobug(page);
 }
 
-document.getElementById("toFirstVideo").onclick = () => {
+document.getElementById("toFirstVideo").onclick = ()=>{
   if(videosData.length > 0){
     goToPage(2);
   }
 };
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click",(e)=>{
+
   const arrow = e.target.closest(".arrow");
   if(!arrow) return;
 
   const target = Number(arrow.dataset.target);
+
   if(target){
     goToPage(target);
   }
+
 });
 
 goToPage(1);
