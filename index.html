@@ -140,20 +140,8 @@ model-viewer{
 .youtube-overlay{
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.42);
+  background:rgba(0,0,0,0.35);
   z-index:1;
-}
-
-/* AUDIO IFRAME OCULTO */
-
-.audio-bg{
-  position:fixed;
-  width:1px;
-  height:1px;
-  left:-9999px;
-  top:-9999px;
-  opacity:0;
-  pointer-events:none;
 }
 
 .weather-stage{
@@ -190,7 +178,7 @@ model-viewer{
   white-space:nowrap;
   transform:translateY(-50%);
   animation:crawlMove 16s linear infinite;
-  color:white;
+  color:black;
   font-size:clamp(22px, 3vw, 42px);
   font-weight:400;
   letter-spacing:.02em;
@@ -205,7 +193,7 @@ model-viewer{
 .weather-frame{
   position:absolute;
   inset:0;
-  border:.95vw solid white;
+  border:.95vw solid black;
   box-sizing:border-box;
   z-index:2;
   pointer-events:none;
@@ -227,7 +215,7 @@ model-viewer{
   font-size:clamp(150px, 33vw, 470px);
   line-height:.82;
   font-weight:400;
-  color:white;
+  color:black;
   letter-spacing:-0.06em;
   transform-origin:right bottom;
 }
@@ -239,7 +227,7 @@ model-viewer{
   transform:translateY(-50%);
   font-size:clamp(74px, 10vw, 150px);
   line-height:1;
-  color:white;
+  color:black;
   z-index:2;
   pointer-events:none;
 }
@@ -252,7 +240,7 @@ model-viewer{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  color:white;
+  color:black;
   font-size:clamp(14px, 1.35vw, 20px);
   text-transform:uppercase;
   letter-spacing:.08em;
@@ -260,7 +248,7 @@ model-viewer{
 }
 
 .temp-status{
-  opacity:.88;
+  opacity:.8;
 }
 
 .temp-city-name{
@@ -276,7 +264,7 @@ model-viewer{
   display:flex;
   align-items:center;
   justify-content:center;
-  color:white;
+  color:black;
   font-size:clamp(40px, 8vw, 90px);
   z-index:2;
   pointer-events:none;
@@ -287,7 +275,7 @@ model-viewer{
   left:8%;
   right:8%;
   bottom:16%;
-  color:white;
+  color:black;
   font-size:clamp(16px, 1.6vw, 24px);
   text-transform:uppercase;
   z-index:3;
@@ -305,8 +293,8 @@ model-viewer{
 }
 
 .city-pill{
-  border:1px solid rgba(255,255,255,.32);
-  color:rgba(255,255,255,.82);
+  border:1px solid rgba(255,255,255,.18);
+  color:rgba(255,255,255,.76);
   background:rgba(0,0,0,.34);
   backdrop-filter:blur(5px);
   padding:.55em .8em;
@@ -497,16 +485,6 @@ model-viewer{
 
 </div>
 
-<!-- audio oculto -->
-<div class="audio-bg">
-  <iframe
-    id="weatherAudioIframe"
-    src=""
-    frameborder="0"
-    allow="autoplay">
-  </iframe>
-</div>
-
 <script>
 
 const videosData = [
@@ -515,8 +493,6 @@ const videosData = [
   { src: "VIDEOS/NOVALORAMOSVERS02.webm", muted: false },
   { src: "VIDEOS/Iambig.webm", muted: false }
 ];
-
-const weatherAudioId = "2wSDbm4Z5DA";
 
 const weatherCities = [
   { label: "Buenos Aires", query: "Buenos Aires", bgId: "NUnJc82ptd4" },
@@ -533,14 +509,9 @@ let currentWeatherIndex = 0;
 let weatherTimer = null;
 let weatherDataCache = {};
 let currentYoutubeBgId = weatherCities[0].bgId;
-let audioStarted = false;
 
 function getYoutubeEmbedUrl(videoId, muted = true){
   return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&loop=1&playlist=${videoId}&rel=0&playsinline=1`;
-}
-
-function getYoutubeAudioUrl(videoId){
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${videoId}&rel=0&playsinline=1`;
 }
 
 function createVideoPages(){
@@ -722,24 +693,6 @@ function setWeatherBackground(videoId){
   iframe.src = getYoutubeEmbedUrl(videoId, true);
 }
 
-function startWeatherAudio(){
-  if(audioStarted) return;
-
-  const audioIframe = document.getElementById("weatherAudioIframe");
-  if(!audioIframe) return;
-
-  audioIframe.src = getYoutubeAudioUrl(weatherAudioId);
-  audioStarted = true;
-}
-
-function stopWeatherAudio(){
-  const audioIframe = document.getElementById("weatherAudioIframe");
-  if(!audioIframe) return;
-
-  audioIframe.src = "";
-  audioStarted = false;
-}
-
 function updateWeatherUI(cityLabel, tempValue){
   const tempNumber = document.getElementById("tempNumber");
   const weatherLoading = document.getElementById("weatherLoading");
@@ -890,10 +843,8 @@ function startWeatherRotation(){
 function maybeHandleWeatherPage(page){
   if(page === weatherPageNumber){
     startWeatherRotation();
-    startWeatherAudio();
   }else{
     stopWeatherRotation();
-    stopWeatherAudio();
   }
 }
 
