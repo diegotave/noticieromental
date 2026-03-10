@@ -144,18 +144,6 @@ model-viewer{
   z-index:1;
 }
 
-/* AUDIO IFRAME OCULTO */
-
-.audio-bg{
-  position:fixed;
-  width:1px;
-  height:1px;
-  left:-9999px;
-  top:-9999px;
-  opacity:0;
-  pointer-events:none;
-}
-
 .weather-stage{
   position:absolute;
   inset:0;
@@ -320,6 +308,12 @@ model-viewer{
   color:black;
   background:white;
   border-color:white;
+}
+
+/* AUDIO */
+
+audio{
+  display:none;
 }
 
 /* FLECHAS */
@@ -497,8 +491,7 @@ model-viewer{
 
 </div>
 
-<!-- audio oculto -->
-<audio id="weatherAudio" preload="auto" loop>
+<audio id="weatherAudio" preload="auto" loop playsinline>
   <source src="AUDIO/weather-bg.mp3" type="audio/mpeg">
 </audio>
 
@@ -510,8 +503,6 @@ const videosData = [
   { src: "VIDEOS/NOVALORAMOSVERS02.webm", muted: false },
   { src: "VIDEOS/Iambig.webm", muted: false }
 ];
-
-const weatherAudioId = "2wSDbm4Z5DA";
 
 const weatherCities = [
   { label: "Buenos Aires", query: "Buenos Aires", bgId: "NUnJc82ptd4" },
@@ -529,13 +520,10 @@ let weatherTimer = null;
 let weatherDataCache = {};
 let currentYoutubeBgId = weatherCities[0].bgId;
 let audioStarted = false;
+let audioUnlocked = false;
 
 function getYoutubeEmbedUrl(videoId, muted = true){
   return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&loop=1&playlist=${videoId}&rel=0&playsinline=1`;
-}
-
-function getYoutubeAudioUrl(videoId){
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${videoId}&rel=0&playsinline=1`;
 }
 
 function createVideoPages(){
@@ -717,21 +705,52 @@ function setWeatherBackground(videoId){
   iframe.src = getYoutubeEmbedUrl(videoId, true);
 }
 
+function unlockAudioOnce(){
+  if(audioUnlocked) return;
+
+  const audio = document.getElementById("weatherAudio");
+  if(!audio) return;
+
+  audio.volume = 0.22;
+
+  const playPromise = audio.play();
+  if(playPromise !== undefined){
+    playPromise
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audioUnlocked = true;
+      })
+      .catch((err) => {
+        console.warn("No se pudo desbloquear el audio:", err);
+      });
+  }
+}
+
 function startWeatherAudio(){
-  if(audioStarted) return;
+  const audio = document.getElementById("weatherAudio");
+  if(!audio) return;
 
-  const audioIframe = document.getElementById("weatherAudioIframe");
-  if(!audioIframe) return;
+  audio.volume = 0.22;
 
-  audioIframe.src = getYoutubeAudioUrl(weatherAudioId);
-  audioStarted = true;
+  const playPromise = audio.play();
+  if(playPromise !== undefined){
+    playPromise
+      .then(() => {
+        audioStarted = true;
+      })
+      .catch((err) => {
+        console.warn("Audio bloqueado por autoplay policy:", err);
+      });
+  }
 }
 
 function stopWeatherAudio(){
-  const audioIframe = document.getElementById("weatherAudioIframe");
-  if(!audioIframe) return;
+  const audio = document.getElementById("weatherAudio");
+  if(!audio) return;
 
-  audioIframe.src = "";
+  audio.pause();
+  audio.currentTime = 0;
   audioStarted = false;
 }
 
@@ -915,12 +934,15 @@ function goToPage(page){
 }
 
 document.getElementById("toFirstVideo").onclick = ()=>{
+  unlockAudioOnce();
   if(videosData.length > 0){
     goToPage(2);
   }
 };
 
 document.addEventListener("click",(e)=>{
+
+  unlockAudioOnce();
 
   const cityPill = e.target.closest(".city-pill");
   if(cityPill){
