@@ -1,164 +1,184 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
 <title>Objeto 3D</title>
 
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-
 <link rel="stylesheet" href="weather.css">
 
 <style>
-
 html,body{
-margin:0;
-width:100%;
-height:100%;
-overflow:hidden;
-background:black;
-font-family:Arial, Helvetica, sans-serif;
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:black;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 #slider{
-display:flex;
-height:100vh;
-transition:transform 0.35s ease;
+  display:flex;
+  height:100vh;
+  transition:transform 0.35s ease;
 }
 
 .page{
-width:100vw;
-height:100vh;
-position:relative;
-flex:0 0 100vw;
-overflow:hidden;
+  width:100vw;
+  height:100vh;
+  position:relative;
+  flex:0 0 100vw;
+  overflow:hidden;
 }
 
-#page1{background:yellow;}
+#page1{
+  background:yellow;
+}
 
 .arrow{
-position:absolute;
-top:50%;
-transform:translateY(-50%);
-width:120px;
-height:120px;
-cursor:pointer;
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:120px;
+  height:120px;
+  cursor:pointer;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .arrow::before{
-content:"";
-border-top:30px solid transparent;
-border-bottom:30px solid transparent;
-border-left:48px solid rgba(255,255,255,0.8);
+  content:"";
+  width:0;
+  height:0;
+  border-top:30px solid transparent;
+  border-bottom:30px solid transparent;
+  border-left:48px solid rgba(255,255,255,0.8);
 }
 
-.left{left:20px;}
-.right{right:20px;}
+.left{ left:20px; }
+.right{ right:20px; }
 
 .left::before{
-transform:rotate(180deg);
+  transform:rotate(180deg);
 }
 
+.video-el{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
 </style>
-
 </head>
 
 <body>
 
 <div id="slider">
+  <div class="page" id="page1">
+    <model-viewer
+      src="earth plateada.glb"
+      camera-controls
+      auto-rotate
+      autoplay
+      style="width:100%;height:100%;">
+    </model-viewer>
 
-<div class="page" id="page1">
-
-<model-viewer
-src="earth plateada.glb"
-camera-controls
-auto-rotate
-autoplay>
-</model-viewer>
-
-<div class="arrow right" onclick="goToPage(2)"></div>
-
+    <div class="arrow right" onclick="goToPage(2)"></div>
+  </div>
 </div>
 
-</div>
+<script src="weather.js"></script>
 
 <script>
-
-/* VIDEOS */
-
-const videosData=[
-{src:"VIDEOS/bitch3d.webm"},
-{src:"VIDEOS/tuprimomarvin.webm"},
-{src:"VIDEOS/NOVALORAMOSVERS02.webm"},
-{src:"VIDEOS/Iambig.webm"}
+const videosData = [
+  { src:"VIDEOS/bitch3d.webm" },
+  { src:"VIDEOS/tuprimomarvin.webm" },
+  { src:"VIDEOS/NOVALORAMOSVERS02.webm" },
+  { src:"VIDEOS/Iambig.webm" }
 ];
 
-const slider=document.getElementById("slider");
-
-/* CREAR PAGINAS VIDEO */
+const slider = document.getElementById("slider");
 
 function createVideoPages(){
+  videosData.forEach((video, i) => {
+    const pageNumber = i + 2;
 
-videosData.forEach((video,i)=>{
+    const page = document.createElement("div");
+    page.className = "page";
+    page.id = `videoPage${pageNumber}`;
 
-const pageNumber=i+2;
+    page.innerHTML = `
+      <video
+        class="video-el"
+        id="video${pageNumber}"
+        src="${video.src}"
+        loop
+        playsinline
+        preload="auto">
+      </video>
 
-const page=document.createElement("div");
-page.className="page";
+      <div class="arrow left" onclick="goToPage(${pageNumber - 1})"></div>
+      <div class="arrow right" onclick="goToPage(${pageNumber + 1})"></div>
+    `;
 
-page.innerHTML=`
-
-<video class="video-el"
-src="${video.src}"
-loop
-autoplay
-playsinline
-style="width:100%;height:100%;object-fit:cover;">
-</video>
-
-<div class="arrow left" onclick="goToPage(${pageNumber-1})"></div>
-<div class="arrow right" onclick="goToPage(${pageNumber+1})"></div>
-
-`;
-
-slider.appendChild(page);
-
-});
-
+    slider.appendChild(page);
+  });
 }
 
 createVideoPages();
+createWeatherPage(slider, videosData.length);
 
-/* WEATHER PAGE (archivo externo) */
+const totalPages = 1 + videosData.length + 1;
+slider.style.width = `${totalPages * 100}%`;
 
-createWeatherPage(slider,videosData.length);
+function stopAllVideos(){
+  document.querySelectorAll(".video-el").forEach(video => {
+    video.pause();
+    video.currentTime = 0;
+    video.muted = true;
+    video.volume = 1;
+  });
+}
 
-/* TOTAL PAGINAS */
-
-const totalPages=1+videosData.length+1;
-slider.style.width=`${totalPages*100}%`;
-
-/* NAVEGACION */
+function playCurrentVideo(page){
+  if(page >= 2 && page <= videosData.length + 1){
+    const video = document.getElementById(`video${page}`);
+    if(video){
+      video.muted = false;
+      video.volume = 1;
+      video.play().catch(err => {
+        console.warn("No se pudo reproducir el video con audio:", err);
+      });
+    }
+  }
+}
 
 function goToPage(page){
+  const offset = (page - 1) * 100;
+  slider.style.transform = `translateX(-${offset}vw)`;
 
-const offset=(page-1)*100;
+  stopAllVideos();
 
-slider.style.transform=`translateX(-${offset}vw)`;
+  if(page === totalPages){
+    startWeatherRotation();
+  }else{
+    stopWeatherRotation();
+  }
 
-if(page===totalPages){
-startWeatherRotation();
-}else{
-stopWeatherRotation();
+  playCurrentVideo(page);
 }
 
-}
+goToPage(1);
 
+document.addEventListener("click", () => {
+  const pageMatch = slider.style.transform.match(/translateX\(-(\d+)vw\)/);
+  const currentPage = pageMatch ? (Number(pageMatch[1]) / 100) + 1 : 1;
+  playCurrentVideo(currentPage);
+}, { once:true });
 </script>
-
-<script src="weather.js"></script>
 
 </body>
 </html>
