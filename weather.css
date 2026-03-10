@@ -1,0 +1,102 @@
+#pageWeather{
+  background:#0a0a0a;
+  }
+  
+  .youtube-bg{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  }
+  
+  .youtube-bg iframe{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:177.78vh;
+  height:100vh;
+  min-width:100vw;
+  min-height:56.25vw;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  }
+  
+  .youtube-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  }
+  
+  .weather-stage{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  }
+  
+  .weather-plate{
+  position:relative;
+  width:min(82vw,1000px);
+  aspect-ratio:1/1;
+  }
+  
+  .weather-frame{
+  position:absolute;
+  inset:0;
+  border:1vw solid white;
+  }
+  
+  .temp-wrap{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  }
+  
+  .temp-number{
+  font-size:clamp(150px,33vw,470px);
+  color:white;
+  }
+  
+  .temp-unit{
+  position:absolute;
+  right:4%;
+  top:45%;
+  font-size:clamp(70px,10vw,150px);
+  color:white;
+  }
+  
+  .temp-subline{
+  position:absolute;
+  bottom:4%;
+  left:8%;
+  right:8%;
+  display:flex;
+  justify-content:space-between;
+  color:white;
+  }
+  
+  .weather-city-list{
+  position:absolute;
+  top:24px;
+  left:26px;
+  display:flex;
+  gap:2px;
+  z-index:5;
+  }
+  
+  .city-pill{
+  border:1px solid rgba(255,255,255,.4);
+  background:rgba(8,53,92,.8);
+  color:white;
+  padding:0 16px;
+  height:32px;
+  font-size:12px;
+  cursor:pointer;
+  }
+  
+  .city-pill.active{
+  background:white;
+  color:black;
+  }

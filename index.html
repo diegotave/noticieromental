@@ -5,903 +5,160 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
-
 <title>Objeto 3D</title>
 
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
+<link rel="stylesheet" href="weather.css">
+
 <style>
 
 html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:black;
-  font-family:Arial, Helvetica, sans-serif;
+margin:0;
+width:100%;
+height:100%;
+overflow:hidden;
+background:black;
+font-family:Arial, Helvetica, sans-serif;
 }
 
 #slider{
-  display:flex;
-  height:100svh;
-  height:100dvh;
-  transition:transform 0.35s ease;
+display:flex;
+height:100vh;
+transition:transform 0.35s ease;
 }
 
 .page{
-  width:100vw;
-  height:100svh;
-  height:100dvh;
-  position:relative;
-  flex:0 0 100vw;
-  overflow:hidden;
+width:100vw;
+height:100vh;
+position:relative;
+flex:0 0 100vw;
+overflow:hidden;
 }
 
-#page1{ background:yellow; }
-
-.video-page{
-  background:black;
-}
-
-.custom-page{
-  background:black;
-}
-
-model-viewer{
-  width:100%;
-  height:100%;
-  background:transparent;
-}
-
-/* LOGO BUG */
-
-#logobug{
-  position:fixed;
-  top:20px;
-  right:20px;
-  width:150px;
-  height:150px;
-  z-index:9999;
-  pointer-events:none;
-  opacity:0;
-  visibility:hidden;
-  transition:opacity 0.25s ease, visibility 0.25s ease;
-}
-
-#logobug.show{
-  opacity:1;
-  visibility:visible;
-}
-
-#logobug model-viewer{
-  width:100%;
-  height:100%;
-  background:transparent;
-}
-
-/* VIDEO FRAME */
-
-.video-frame{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  background:black;
-}
-
-.video-shell{
-  position:relative;
-  width:min(100vw, calc(100dvh * 16 / 9));
-  aspect-ratio:16 / 9;
-  overflow:hidden;
-  background:black;
-}
-
-.video-el{
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit:cover;
-  background:black;
-}
-
-/* PAGE WEATHER */
-
-#pageWeather{
-  background:#0a0a0a;
-}
-
-/* YOUTUBE BACKGROUND */
-
-.youtube-bg{
-  position:absolute;
-  inset:0;
-  z-index:0;
-  overflow:hidden;
-}
-
-.youtube-bg iframe{
-  position:absolute;
-  top:50%;
-  left:50%;
-  width:177.78vh;
-  height:100vh;
-  min-width:100vw;
-  min-height:56.25vw;
-  transform:translate(-50%,-50%);
-  pointer-events:none;
-}
-
-.youtube-overlay{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,0.35);
-  z-index:1;
-}
-
-.weather-stage{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:4vh 4vw;
-  z-index:2;
-}
-
-.weather-plate{
-  position:relative;
-  width:min(82vw, 1000px);
-  aspect-ratio:1 / 1;
-  max-height:82vh;
-}
-
-.weather-crawl-window{
-  position:absolute;
-  top:8%;
-  left:8%;
-  width:84%;
-  height:11%;
-  overflow:hidden;
-  z-index:3;
-}
-
-.weather-crawl-track{
-  position:absolute;
-  top:50%;
-  left:0;
-  white-space:nowrap;
-  transform:translateY(-50%);
-  animation:crawlMove 16s linear infinite;
-  color:black;
-  font-size:clamp(22px, 3vw, 42px);
-  font-weight:400;
-  letter-spacing:.02em;
-  text-transform:uppercase;
-}
-
-@keyframes crawlMove{
-  0%{ transform:translate(100%, -50%); }
-  100%{ transform:translate(-100%, -50%); }
-}
-
-.weather-frame{
-  position:absolute;
-  inset:0;
-  border:.95vw solid black;
-  box-sizing:border-box;
-  z-index:2;
-  pointer-events:none;
-}
-
-.temp-wrap{
-  position:absolute;
-  left:8%;
-  right:8%;
-  top:22%;
-  bottom:8%;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  z-index:1;
-}
-
-.temp-number{
-  font-size:clamp(150px, 33vw, 470px);
-  line-height:.82;
-  font-weight:400;
-  color:black;
-  letter-spacing:-0.06em;
-  transform-origin:right bottom;
-}
-
-.temp-unit{
-  position:absolute;
-  right:3.8%;
-  top:44%;
-  transform:translateY(-50%);
-  font-size:clamp(74px, 10vw, 150px);
-  line-height:1;
-  color:black;
-  z-index:2;
-  pointer-events:none;
-}
-
-.temp-subline{
-  position:absolute;
-  left:8%;
-  bottom:3.6%;
-  right:8%;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  color:black;
-  font-size:clamp(14px, 1.35vw, 20px);
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  z-index:3;
-}
-
-.temp-status{
-  opacity:.8;
-}
-
-.temp-city-name{
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  max-width:68%;
-}
-
-.weather-loading{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:black;
-  font-size:clamp(40px, 8vw, 90px);
-  z-index:2;
-  pointer-events:none;
-}
-
-.weather-error{
-  position:absolute;
-  left:8%;
-  right:8%;
-  bottom:16%;
-  color:black;
-  font-size:clamp(16px, 1.6vw, 24px);
-  text-transform:uppercase;
-  z-index:3;
-  display:none;
-}
-
-.weather-city-list{
-  position:absolute;
-  left:4vw;
-  top:4vh;
-  display:flex;
-  gap:.6vw;
-  flex-wrap:wrap;
-  z-index:4;
-}
-
-.city-pill{
-  border:1px solid rgba(255,255,255,.18);
-  color:rgba(255,255,255,.76);
-  background:rgba(0,0,0,.34);
-  backdrop-filter:blur(5px);
-  padding:.55em .8em;
-  font-size:clamp(12px, .95vw, 15px);
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  cursor:pointer;
-}
-
-.city-pill.active{
-  color:black;
-  background:white;
-  border-color:white;
-}
-
-/* FLECHAS */
+#page1{background:yellow;}
 
 .arrow{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  width:120px;
-  height:120px;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:20;
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+width:120px;
+height:120px;
+cursor:pointer;
 }
 
 .arrow::before{
-  content:"";
-  width:0;
-  height:0;
-  border-top:30px solid transparent;
-  border-bottom:30px solid transparent;
-  border-left:48px solid rgba(255,255,255,0.75);
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));
-  transition:opacity .25s ease, transform .25s ease;
-  opacity:0.75;
+content:"";
+border-top:30px solid transparent;
+border-bottom:30px solid transparent;
+border-left:48px solid rgba(255,255,255,0.8);
 }
 
-.arrow:hover::before{
-  opacity:1;
-  transform:scale(1.08);
-}
-
-.right{ right:20px; }
-.left{ left:20px; }
+.left{left:20px;}
+.right{right:20px;}
 
 .left::before{
-  transform:rotate(180deg);
-}
-
-.left:hover::before{
-  transform:rotate(180deg) scale(1.08);
-}
-
-@media (max-width:1024px){
-  .arrow{
-    width:96px;
-    height:96px;
-  }
-
-  .arrow::before{
-    border-top:24px solid transparent;
-    border-bottom:24px solid transparent;
-    border-left:38px solid rgba(255,255,255,0.75);
-  }
-
-  #logobug{
-    width:120px;
-    height:120px;
-    top:16px;
-    right:16px;
-  }
-
-  .weather-frame{
-    border-width:1.2vw;
-  }
-}
-
-@media (orientation:portrait){
-
-  .video-shell{
-    width:100vw;
-    height:auto;
-    aspect-ratio:16 / 9;
-    max-height:100dvh;
-    max-height:100svh;
-  }
-
-  .video-el{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
-
-  .arrow{
-    width:82px;
-    height:82px;
-  }
-
-  .arrow::before{
-    border-top:20px solid transparent;
-    border-bottom:20px solid transparent;
-    border-left:32px solid rgba(255,255,255,0.75);
-  }
-
-  .right{ right:10px; }
-  .left{ left:10px; }
-
-  #logobug{
-    width:90px;
-    height:90px;
-    top:12px;
-    right:12px;
-  }
-
-  .weather-plate{
-    width:92vw;
-    max-height:none;
-  }
-
-  .weather-frame{
-    border-width:6px;
-  }
-
-  .weather-crawl-track{
-    font-size:clamp(16px, 4vw, 24px);
-  }
-
-  .temp-unit{
-    right:2.7%;
-    top:44.5%;
-  }
-
-  .weather-city-list{
-    left:14px;
-    right:14px;
-    top:14px;
-    gap:8px;
-  }
-
-  .city-pill{
-    font-size:11px;
-  }
-
-  .temp-subline{
-    font-size:11px;
-  }
+transform:rotate(180deg);
 }
 
 </style>
+
 </head>
 
 <body>
 
-<div id="logobug">
-  <model-viewer
-    src="earth plateada.glb"
-    auto-rotate
-    auto-rotate-delay="0"
-    autoplay
-    exposure="1"
-    shadow-intensity="0"
-    interaction-prompt="none"
-    disable-zoom
-    disable-pan>
-  </model-viewer>
-</div>
-
 <div id="slider">
 
-  <div class="page" id="page1">
-    <model-viewer
-      src="earth plateada.glb"
-      camera-controls
-      auto-rotate
-      auto-rotate-delay="0"
-      autoplay
-      shadow-intensity="1"
-      exposure="1">
-    </model-viewer>
+<div class="page" id="page1">
 
-    <div class="arrow right" id="toFirstVideo"></div>
-  </div>
+<model-viewer
+src="earth plateada.glb"
+camera-controls
+auto-rotate
+autoplay>
+</model-viewer>
+
+<div class="arrow right" onclick="goToPage(2)"></div>
+
+</div>
 
 </div>
 
 <script>
 
-const videosData = [
-  { src: "VIDEOS/bitch3d.webm", muted: false },
-  { src: "VIDEOS/tuprimomarvin.webm", muted: false },
-  { src: "VIDEOS/NOVALORAMOSVERS02.webm", muted: false },
-  { src: "VIDEOS/Iambig.webm", muted: false }
+/* VIDEOS */
+
+const videosData=[
+{src:"VIDEOS/bitch3d.webm"},
+{src:"VIDEOS/tuprimomarvin.webm"},
+{src:"VIDEOS/NOVALORAMOSVERS02.webm"},
+{src:"VIDEOS/Iambig.webm"}
 ];
 
-const weatherCities = [
-  { label: "Buenos Aires", query: "Buenos Aires", bgId: "NUnJc82ptd4" },
-  { label: "Madrid", query: "Madrid", bgId: "zbo6jUGrwdk" },
-  { label: "Nueva York", query: "New York", bgId: "NUnJc82ptd4" },
-  { label: "Tokio", query: "Tokyo", bgId: "zbo6jUGrwdk" }
-];
+const slider=document.getElementById("slider");
 
-const slider = document.getElementById("slider");
-const logobug = document.getElementById("logobug");
-
-let weatherPageNumber = null;
-let currentWeatherIndex = 0;
-let weatherTimer = null;
-let weatherDataCache = {};
-let currentYoutubeBgId = weatherCities[0].bgId;
-
-function getYoutubeEmbedUrl(videoId, muted = true){
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&loop=1&playlist=${videoId}&rel=0&playsinline=1`;
-}
+/* CREAR PAGINAS VIDEO */
 
 function createVideoPages(){
-  videosData.forEach((videoData, i) => {
-    const pageNumber = i + 2;
 
-    const page = document.createElement("div");
-    page.className = "page video-page";
-    page.id = `page${pageNumber}`;
+videosData.forEach((video,i)=>{
 
-    const frame = document.createElement("div");
-    frame.className = "video-frame";
+const pageNumber=i+2;
 
-    const shell = document.createElement("div");
-    shell.className = "video-shell";
+const page=document.createElement("div");
+page.className="page";
 
-    const video = document.createElement("video");
-    video.className = "video-el";
-    video.id = `video${pageNumber}`;
-    video.dataset.src = videoData.src;
-    video.setAttribute("loop","");
-    video.setAttribute("playsinline","");
-    video.setAttribute("preload","none");
+page.innerHTML=`
 
-    if(videoData.muted){
-      video.muted = true;
-      video.setAttribute("muted","");
-    }
+<video class="video-el"
+src="${video.src}"
+loop
+autoplay
+playsinline
+style="width:100%;height:100%;object-fit:cover;">
+</video>
 
-    shell.appendChild(video);
-    frame.appendChild(shell);
-    page.appendChild(frame);
+<div class="arrow left" onclick="goToPage(${pageNumber-1})"></div>
+<div class="arrow right" onclick="goToPage(${pageNumber+1})"></div>
 
-    const left = document.createElement("div");
-    left.className = "arrow left";
-    left.dataset.target = pageNumber - 1;
-    page.appendChild(left);
+`;
 
-    const right = document.createElement("div");
-    right.className = "arrow right";
-    right.dataset.target = pageNumber + 1;
-    right.classList.add("video-next-arrow");
-    page.appendChild(right);
+slider.appendChild(page);
 
-    slider.appendChild(page);
-  });
-}
+});
 
-function createWeatherPage(){
-  weatherPageNumber = videosData.length + 2;
-
-  const page = document.createElement("div");
-  page.className = "page custom-page";
-  page.id = "pageWeather";
-
-  page.innerHTML = `
-    <div class="youtube-bg">
-      <iframe
-        id="youtubeBgIframe"
-        src="${getYoutubeEmbedUrl(currentYoutubeBgId, true)}"
-        frameborder="0"
-        allow="autoplay; fullscreen"
-        allowfullscreen>
-      </iframe>
-    </div>
-
-    <div class="youtube-overlay"></div>
-
-    <div class="weather-city-list" id="weatherCityList"></div>
-
-    <div class="weather-stage">
-      <div class="weather-plate">
-        <div class="weather-crawl-window">
-          <div class="weather-crawl-track" id="weatherCrawl">
-            LA TEMPERATURA EN LA CIUDAD DE BUENOS AIRES &nbsp;&nbsp;&nbsp; LA TEMPERATURA EN LA CIUDAD DE BUENOS AIRES
-          </div>
-        </div>
-
-        <div class="weather-frame"></div>
-
-        <div class="temp-wrap">
-          <div class="temp-number" id="tempNumber">--</div>
-        </div>
-
-        <div class="temp-unit">°C</div>
-        <div class="weather-loading" id="weatherLoading">--</div>
-        <div class="weather-error" id="weatherError">SIN DATOS</div>
-
-        <div class="temp-subline">
-          <div class="temp-city-name" id="tempCityName">BUENOS AIRES</div>
-          <div class="temp-status" id="tempStatus">EN VIVO</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrow left" data-target="${weatherPageNumber - 1}"></div>
-    <div class="arrow right" data-target="1"></div>
-  `;
-
-  slider.appendChild(page);
-
-  const lastVideoArrow = slider.querySelector(`#page${weatherPageNumber - 1} .video-next-arrow`);
-  if(lastVideoArrow){
-    lastVideoArrow.dataset.target = weatherPageNumber;
-  }
-
-  const cityList = page.querySelector("#weatherCityList");
-  weatherCities.forEach((city, index) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "city-pill";
-    btn.textContent = city.label;
-    btn.dataset.index = index;
-    cityList.appendChild(btn);
-  });
 }
 
 createVideoPages();
-createWeatherPage();
 
-const totalPages = 1 + videosData.length + 1;
-slider.style.width = `${totalPages * 100}%`;
+/* WEATHER PAGE (archivo externo) */
 
-const allVideos = Array.from(document.querySelectorAll(".video-el"));
+createWeatherPage(slider,videosData.length);
 
-function loadVideo(video){
-  if(!video.getAttribute("src")){
-    video.src = video.dataset.src;
-    video.load();
-  }
-}
+/* TOTAL PAGINAS */
 
-function unloadVideo(video){
-  video.pause();
-  video.removeAttribute("src");
-  video.load();
-}
+const totalPages=1+videosData.length+1;
+slider.style.width=`${totalPages*100}%`;
 
-function unloadAllVideos(){
-  allVideos.forEach(unloadVideo);
-}
-
-function updateLogobug(page){
-  if(page === 1){
-    logobug.classList.remove("show");
-  }else{
-    logobug.classList.add("show");
-  }
-}
-
-function stopWeatherRotation(){
-  if(weatherTimer){
-    clearInterval(weatherTimer);
-    weatherTimer = null;
-  }
-}
-
-function setTempScale(value){
-  const tempNumber = document.getElementById("tempNumber");
-  if(!tempNumber) return;
-
-  const digits = String(Math.abs(value)).length + (value < 0 ? 1 : 0);
-
-  if(digits <= 2){
-    tempNumber.style.fontSize = "clamp(150px, 33vw, 470px)";
-  }else if(digits === 3){
-    tempNumber.style.fontSize = "clamp(132px, 29vw, 410px)";
-  }else{
-    tempNumber.style.fontSize = "clamp(110px, 24vw, 340px)";
-  }
-}
-
-function setWeatherBackground(videoId){
-  const iframe = document.getElementById("youtubeBgIframe");
-  if(!iframe) return;
-  if(currentYoutubeBgId === videoId) return;
-
-  currentYoutubeBgId = videoId;
-  iframe.src = getYoutubeEmbedUrl(videoId, true);
-}
-
-function updateWeatherUI(cityLabel, tempValue){
-  const tempNumber = document.getElementById("tempNumber");
-  const weatherLoading = document.getElementById("weatherLoading");
-  const weatherError = document.getElementById("weatherError");
-  const tempCityName = document.getElementById("tempCityName");
-  const tempStatus = document.getElementById("tempStatus");
-  const weatherCrawl = document.getElementById("weatherCrawl");
-
-  if(!tempNumber) return;
-
-  weatherLoading.style.display = "none";
-  weatherError.style.display = "none";
-  tempNumber.style.display = "block";
-
-  tempNumber.textContent = `${Math.round(tempValue)}`;
-  setTempScale(Math.round(tempValue));
-
-  tempCityName.textContent = cityLabel.toUpperCase();
-  tempStatus.textContent = "EN VIVO";
-
-  const crawlText = `LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()} \u00A0\u00A0\u00A0 LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()}`;
-  weatherCrawl.textContent = crawlText;
-
-  document.querySelectorAll(".city-pill").forEach((pill, i) => {
-    pill.classList.toggle("active", i === currentWeatherIndex);
-  });
-}
-
-function showWeatherLoading(cityLabel){
-  const tempNumber = document.getElementById("tempNumber");
-  const weatherLoading = document.getElementById("weatherLoading");
-  const weatherError = document.getElementById("weatherError");
-  const tempCityName = document.getElementById("tempCityName");
-  const tempStatus = document.getElementById("tempStatus");
-  const weatherCrawl = document.getElementById("weatherCrawl");
-
-  if(!tempNumber) return;
-
-  tempNumber.style.display = "none";
-  weatherError.style.display = "none";
-  weatherLoading.style.display = "flex";
-  weatherLoading.textContent = "--";
-  tempCityName.textContent = cityLabel.toUpperCase();
-  tempStatus.textContent = "CARGANDO";
-
-  const crawlText = `LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()} \u00A0\u00A0\u00A0 LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()}`;
-  weatherCrawl.textContent = crawlText;
-
-  document.querySelectorAll(".city-pill").forEach((pill, i) => {
-    pill.classList.toggle("active", i === currentWeatherIndex);
-  });
-}
-
-function showWeatherError(cityLabel){
-  const tempNumber = document.getElementById("tempNumber");
-  const weatherLoading = document.getElementById("weatherLoading");
-  const weatherError = document.getElementById("weatherError");
-  const tempCityName = document.getElementById("tempCityName");
-  const tempStatus = document.getElementById("tempStatus");
-  const weatherCrawl = document.getElementById("weatherCrawl");
-
-  if(!tempNumber) return;
-
-  tempNumber.style.display = "none";
-  weatherLoading.style.display = "none";
-  weatherError.style.display = "block";
-  tempCityName.textContent = cityLabel.toUpperCase();
-  tempStatus.textContent = "SIN DATOS";
-
-  const crawlText = `LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()} \u00A0\u00A0\u00A0 LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()}`;
-  weatherCrawl.textContent = crawlText;
-
-  document.querySelectorAll(".city-pill").forEach((pill, i) => {
-    pill.classList.toggle("active", i === currentWeatherIndex);
-  });
-}
-
-async function fetchCityTemperature(city){
-  if(weatherDataCache[city.label]){
-    return weatherDataCache[city.label];
-  }
-
-  const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city.query)}&count=1&language=es&format=json`;
-  const geoRes = await fetch(geoUrl);
-
-  if(!geoRes.ok){
-    throw new Error("Error geocoding");
-  }
-
-  const geoData = await geoRes.json();
-
-  if(!geoData.results || !geoData.results.length){
-    throw new Error("Ciudad no encontrada");
-  }
-
-  const place = geoData.results[0];
-
-  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m&timezone=auto`;
-  const weatherRes = await fetch(weatherUrl);
-
-  if(!weatherRes.ok){
-    throw new Error("Error weather");
-  }
-
-  const weatherData = await weatherRes.json();
-
-  if(!weatherData.current || typeof weatherData.current.temperature_2m !== "number"){
-    throw new Error("Sin temperatura");
-  }
-
-  const payload = {
-    label: city.label,
-    temp: weatherData.current.temperature_2m
-  };
-
-  weatherDataCache[city.label] = payload;
-  return payload;
-}
-
-async function renderWeatherCity(index){
-  currentWeatherIndex = index;
-  const city = weatherCities[index];
-  if(!city) return;
-
-  setWeatherBackground(city.bgId);
-  showWeatherLoading(city.label);
-
-  try{
-    const data = await fetchCityTemperature(city);
-    updateWeatherUI(data.label, data.temp);
-  }catch(error){
-    console.error("Weather error:", error);
-    showWeatherError(city.label);
-  }
-}
-
-function startWeatherRotation(){
-  stopWeatherRotation();
-
-  renderWeatherCity(currentWeatherIndex);
-
-  weatherTimer = setInterval(() => {
-    currentWeatherIndex = (currentWeatherIndex + 1) % weatherCities.length;
-    renderWeatherCity(currentWeatherIndex);
-  }, 7000);
-}
-
-function maybeHandleWeatherPage(page){
-  if(page === weatherPageNumber){
-    startWeatherRotation();
-  }else{
-    stopWeatherRotation();
-  }
-}
+/* NAVEGACION */
 
 function goToPage(page){
-  const offset = (page - 1) * 100;
-  slider.style.transform = `translateX(-${offset}vw)`;
 
-  unloadAllVideos();
+const offset=(page-1)*100;
 
-  if(page >= 2 && page <= videosData.length + 1){
-    const video = document.getElementById(`video${page}`);
-    const config = videosData[page - 2];
+slider.style.transform=`translateX(-${offset}vw)`;
 
-    if(video){
-      loadVideo(video);
-      video.muted = !!config.muted;
-      video.volume = config.muted ? 0 : 1;
-      video.play().catch(()=>{});
-    }
-  }
-
-  updateLogobug(page);
-  maybeHandleWeatherPage(page);
+if(page===totalPages){
+startWeatherRotation();
+}else{
+stopWeatherRotation();
 }
 
-document.getElementById("toFirstVideo").onclick = ()=>{
-  if(videosData.length > 0){
-    goToPage(2);
-  }
-};
-
-document.addEventListener("click",(e)=>{
-
-  const cityPill = e.target.closest(".city-pill");
-  if(cityPill){
-    currentWeatherIndex = Number(cityPill.dataset.index);
-    stopWeatherRotation();
-    renderWeatherCity(currentWeatherIndex);
-    weatherTimer = setInterval(() => {
-      currentWeatherIndex = (currentWeatherIndex + 1) % weatherCities.length;
-      renderWeatherCity(currentWeatherIndex);
-    }, 7000);
-    return;
-  }
-
-  const arrow = e.target.closest(".arrow");
-  if(!arrow) return;
-
-  const target = Number(arrow.dataset.target);
-  if(target){
-    goToPage(target);
-  }
-});
-
-goToPage(1);
+}
 
 </script>
+
+<script src="weather.js"></script>
 
 </body>
 </html>
