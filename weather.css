@@ -1,15 +1,15 @@
 #pageWeather{
   background:#0a0a0a;
-}
-
-.youtube-bg{
+  }
+  
+  .youtube-bg{
   position:absolute;
   inset:0;
   z-index:0;
   overflow:hidden;
-}
-
-.youtube-bg iframe{
+  }
+  
+  .youtube-bg iframe{
   position:absolute;
   top:50%;
   left:50%;
@@ -19,62 +19,62 @@
   min-height:56.25vw;
   transform:translate(-50%,-50%);
   pointer-events:none;
-}
-
-.youtube-overlay{
+  }
+  
+  .youtube-overlay{
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.42);
+  background:rgba(0,0,0,.42);
   z-index:1;
-}
-
-.weather-stage{
+  }
+  
+  .weather-stage{
   position:absolute;
   inset:0;
   display:flex;
   align-items:center;
   justify-content:center;
   z-index:2;
-}
-
-.weather-plate{
+  }
+  
+  .weather-plate{
   position:relative;
   width:min(82vw,1000px);
   aspect-ratio:1/1;
   max-height:82vh;
-}
-
-.weather-frame{
+  }
+  
+  .weather-frame{
   position:absolute;
   inset:0;
   border:1vw solid white;
   box-sizing:border-box;
-}
-
-.temp-wrap{
+  }
+  
+  .temp-wrap{
   position:absolute;
   inset:0;
   display:flex;
   align-items:center;
   justify-content:center;
-}
-
-.temp-number{
+  }
+  
+  .temp-number{
   font-size:clamp(150px,33vw,470px);
   color:white;
   line-height:.82;
-}
-
-.temp-unit{
+  }
+  
+  .temp-unit{
   position:absolute;
   right:4%;
   top:45%;
   transform:translateY(-50%);
   font-size:clamp(70px,10vw,150px);
   color:white;
-}
-
-.temp-subline{
+  }
+  
+  .temp-subline{
   position:absolute;
   bottom:4%;
   left:8%;
@@ -84,9 +84,9 @@
   color:white;
   text-transform:uppercase;
   font-size:clamp(14px,1.35vw,20px);
-}
-
-.weather-city-list{
+  }
+  
+  .weather-city-list{
   position:absolute;
   top:24px;
   left:26px;
@@ -94,34 +94,19 @@
   gap:2px;
   z-index:5;
   flex-wrap:wrap;
-}
-
-.city-pill{
+  }
+  
+  .city-pill{
   border:1px solid rgba(255,255,255,.4);
   background:rgba(8,53,92,.8);
   color:white;
   padding:0 16px;
   height:32px;
   font-size:12px;
-  text-transform:uppercase;
   cursor:pointer;
-}
-
-.city-pill.active{
+  }
+  
+  .city-pill.active{
   background:white;
   color:black;
-}
-
-@media (orientation:portrait){
-  .weather-city-list{
-    top:12px;
-    left:12px;
-    max-width:calc(100vw - 24px);
   }
-
-  .city-pill{
-    font-size:11px;
-    height:30px;
-    padding:0 10px;
-  }
-}
