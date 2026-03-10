@@ -114,6 +114,7 @@ model-viewer{
 
 #pageWeather{
   background:#0a0a0a;
+  --shadow-rgb: 0,0,0;
 }
 
 /* YOUTUBE BACKGROUND */
@@ -183,6 +184,7 @@ model-viewer{
   font-weight:400;
   letter-spacing:.02em;
   text-transform:uppercase;
+  text-shadow:0 2px 8px rgba(var(--shadow-rgb),0.22);
 }
 
 @keyframes crawlMove{
@@ -197,6 +199,9 @@ model-viewer{
   box-sizing:border-box;
   z-index:2;
   pointer-events:none;
+  box-shadow:
+    0 0 0 1px rgba(var(--shadow-rgb),0.06),
+    0 8px 22px rgba(var(--shadow-rgb),0.16);
 }
 
 .temp-wrap{
@@ -218,6 +223,7 @@ model-viewer{
   color:black;
   letter-spacing:-0.06em;
   transform-origin:right bottom;
+  text-shadow:0 4px 12px rgba(var(--shadow-rgb),0.20);
 }
 
 .temp-unit{
@@ -230,6 +236,7 @@ model-viewer{
   color:black;
   z-index:2;
   pointer-events:none;
+  text-shadow:0 3px 10px rgba(var(--shadow-rgb),0.20);
 }
 
 .temp-subline{
@@ -245,6 +252,7 @@ model-viewer{
   text-transform:uppercase;
   letter-spacing:.08em;
   z-index:3;
+  text-shadow:0 2px 8px rgba(var(--shadow-rgb),0.18);
 }
 
 .temp-status{
@@ -268,6 +276,7 @@ model-viewer{
   font-size:clamp(40px, 8vw, 90px);
   z-index:2;
   pointer-events:none;
+  text-shadow:0 3px 10px rgba(var(--shadow-rgb),0.18);
 }
 
 .weather-error{
@@ -280,34 +289,7 @@ model-viewer{
   text-transform:uppercase;
   z-index:3;
   display:none;
-}
-
-.weather-city-list{
-  position:absolute;
-  left:4vw;
-  top:4vh;
-  display:flex;
-  gap:.6vw;
-  flex-wrap:wrap;
-  z-index:4;
-}
-
-.city-pill{
-  border:1px solid rgba(255,255,255,.18);
-  color:rgba(255,255,255,.76);
-  background:rgba(0,0,0,.34);
-  backdrop-filter:blur(5px);
-  padding:.55em .8em;
-  font-size:clamp(12px, .95vw, 15px);
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  cursor:pointer;
-}
-
-.city-pill.active{
-  color:black;
-  background:white;
-  border-color:white;
+  text-shadow:0 2px 8px rgba(var(--shadow-rgb),0.18);
 }
 
 /* FLECHAS */
@@ -432,17 +414,6 @@ model-viewer{
     top:44.5%;
   }
 
-  .weather-city-list{
-    left:14px;
-    right:14px;
-    top:14px;
-    gap:8px;
-  }
-
-  .city-pill{
-    font-size:11px;
-  }
-
   .temp-subline{
     font-size:11px;
   }
@@ -495,10 +466,10 @@ const videosData = [
 ];
 
 const weatherCities = [
-  { label: "Buenos Aires", query: "Buenos Aires", bgId: "g3PWYH1P7Oo" },
-  { label: "Madrid", query: "Madrid", bgId: "zbo6jUGrwdk" },
-  { label: "Nueva York", query: "New York", bgId: "g3PWYH1P7Oo" },
-  { label: "Tokio", query: "Tokyo", bgId: "zbo6jUGrwdk" }
+  { label: "Buenos Aires", query: "Buenos Aires", bgId: "g3PWYH1P7Oo", shadowTone: "dark" },
+  { label: "Madrid", query: "Madrid", bgId: "zbo6jUGrwdk", shadowTone: "light" },
+  { label: "Nueva York", query: "New York", bgId: "g3PWYH1P7Oo", shadowTone: "dark" },
+  { label: "Tokio", query: "Tokyo", bgId: "g3PWYH1P7Oo", shadowTone: "dark" }
 ];
 
 const slider = document.getElementById("slider");
@@ -580,8 +551,6 @@ function createWeatherPage(){
 
     <div class="youtube-overlay"></div>
 
-    <div class="weather-city-list" id="weatherCityList"></div>
-
     <div class="weather-stage">
       <div class="weather-plate">
         <div class="weather-crawl-window">
@@ -617,16 +586,6 @@ function createWeatherPage(){
   if(lastVideoArrow){
     lastVideoArrow.dataset.target = weatherPageNumber;
   }
-
-  const cityList = page.querySelector("#weatherCityList");
-  weatherCities.forEach((city, index) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "city-pill";
-    btn.textContent = city.label;
-    btn.dataset.index = index;
-    cityList.appendChild(btn);
-  });
 }
 
 createVideoPages();
@@ -684,6 +643,17 @@ function setTempScale(value){
   }
 }
 
+function applyGraphicShadowTone(tone){
+  const weatherPage = document.getElementById("pageWeather");
+  if(!weatherPage) return;
+
+  if(tone === "light"){
+    weatherPage.style.setProperty("--shadow-rgb", "255,255,255");
+  }else{
+    weatherPage.style.setProperty("--shadow-rgb", "0,0,0");
+  }
+}
+
 function setWeatherBackground(videoId){
   const iframe = document.getElementById("youtubeBgIframe");
   if(!iframe) return;
@@ -715,10 +685,6 @@ function updateWeatherUI(cityLabel, tempValue){
 
   const crawlText = `LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()} \u00A0\u00A0\u00A0 LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()}`;
   weatherCrawl.textContent = crawlText;
-
-  document.querySelectorAll(".city-pill").forEach((pill, i) => {
-    pill.classList.toggle("active", i === currentWeatherIndex);
-  });
 }
 
 function showWeatherLoading(cityLabel){
@@ -740,10 +706,6 @@ function showWeatherLoading(cityLabel){
 
   const crawlText = `LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()} \u00A0\u00A0\u00A0 LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()}`;
   weatherCrawl.textContent = crawlText;
-
-  document.querySelectorAll(".city-pill").forEach((pill, i) => {
-    pill.classList.toggle("active", i === currentWeatherIndex);
-  });
 }
 
 function showWeatherError(cityLabel){
@@ -764,10 +726,6 @@ function showWeatherError(cityLabel){
 
   const crawlText = `LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()} \u00A0\u00A0\u00A0 LA TEMPERATURA EN LA CIUDAD DE ${cityLabel.toUpperCase()}`;
   weatherCrawl.textContent = crawlText;
-
-  document.querySelectorAll(".city-pill").forEach((pill, i) => {
-    pill.classList.toggle("active", i === currentWeatherIndex);
-  });
 }
 
 async function fetchCityTemperature(city){
@@ -817,6 +775,7 @@ async function renderWeatherCity(index){
   const city = weatherCities[index];
   if(!city) return;
 
+  applyGraphicShadowTone(city.shadowTone || "dark");
   setWeatherBackground(city.bgId);
   showWeatherLoading(city.label);
 
@@ -877,19 +836,6 @@ document.getElementById("toFirstVideo").onclick = ()=>{
 };
 
 document.addEventListener("click",(e)=>{
-
-  const cityPill = e.target.closest(".city-pill");
-  if(cityPill){
-    currentWeatherIndex = Number(cityPill.dataset.index);
-    stopWeatherRotation();
-    renderWeatherCity(currentWeatherIndex);
-    weatherTimer = setInterval(() => {
-      currentWeatherIndex = (currentWeatherIndex + 1) % weatherCities.length;
-      renderWeatherCity(currentWeatherIndex);
-    }, 7000);
-    return;
-  }
-
   const arrow = e.target.closest(".arrow");
   if(!arrow) return;
 
