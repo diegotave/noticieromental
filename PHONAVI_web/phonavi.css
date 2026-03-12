@@ -1,0 +1,229 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: #ececec;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #000;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  padding: 36px 40px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer {
+  width: 100%;
+  max-width: 1460px;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: end;
+  justify-content: center;
+  column-gap: 22px;
+}
+
+.brand {
+  position: absolute;
+  top: 78px;
+  right: 120px;
+  margin: 0;
+  font-size: clamp(44px, 4.7vw, 76px);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+/* ---------------- CENTRO ---------------- */
+
+.front-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.front-cd {
+  position: relative;
+  width: 585px;
+  height: 585px;
+  flex: 0 0 auto;
+}
+
+/* cuadrado útil interno */
+.front-image-box {
+  position: absolute;
+  left: 74px;
+  top: 35px;
+  width: 438px;
+  height: 438px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.front-image-box img {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: auto;
+  transform: translateX(-50%);
+  display: block;
+  max-width: none;
+}
+
+.front-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+.front-caption {
+  margin-top: 8px;
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---------------- LOMOS ---------------- */
+
+.spines-group {
+  height: 585px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spine {
+  position: relative;
+  width: 50px;
+  height: 585px;
+  flex: 0 0 50px;
+  overflow: hidden;
+}
+
+/* contenedor del mismo tamaño del lomo */
+.spine-image-box {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.spine-image-box img {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: auto;
+  transform: translateX(-50%);
+  display: block;
+  max-width: none;
+}
+
+.spine-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+@media (max-width: 1450px) {
+  .front-cd {
+    width: 525px;
+    height: 525px;
+  }
+
+  .front-image-box {
+    left: 66px;
+    top: 31px;
+    width: 394px;
+    height: 394px;
+  }
+
+  .spines-group {
+    height: 525px;
+    gap: 7px;
+  }
+
+  .spine {
+    width: 45px;
+    height: 525px;
+    flex-basis: 45px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .app {
+    padding: 100px 18px 24px;
+  }
+
+  .viewer {
+    grid-template-columns: 1fr;
+    row-gap: 18px;
+    justify-items: center;
+  }
+
+  .brand {
+    top: 22px;
+    right: 24px;
+  }
+
+  .spines-group {
+    height: auto;
+    flex-wrap: wrap;
+  }
+
+  .spine {
+    width: 40px;
+    height: 280px;
+    flex-basis: 40px;
+  }
+}
+
+@media (max-width: 760px) {
+  .front-cd {
+    width: min(92vw, 480px);
+    height: min(92vw, 480px);
+  }
+
+  .front-image-box {
+    left: 12.65%;
+    top: 5.98%;
+    width: 74.87%;
+    height: 74.87%;
+  }
+
+  .front-caption {
+    font-size: 18px;
+  }
+
+  .brand {
+    right: 14px;
+    top: 14px;
+    font-size: 40px;
+  }
+}
