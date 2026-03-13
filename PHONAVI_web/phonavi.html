@@ -1,27 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Phönavi</title>
-  <link rel="stylesheet" href="phonavi.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phonavi</title>
+<link rel="stylesheet" href="phonavi.css">
 </head>
+
 <body>
-  <main class="app">
-    <h1 class="brand">Phönavi</h1>
 
-    <section class="viewer">
-      <div id="leftSpines" class="spines-group left"></div>
+<div class="stage" id="stage">
 
-      <div class="front-stage">
-        <div id="frontCd" class="front-cd"></div>
-        <div id="frontCaption" class="front-caption"></div>
+  <div class="spines" id="leftSpines"></div>
+
+  <div class="center-column">
+    <div class="disc" id="frontDisc">
+      <img class="cover" id="frontCover" src="" alt="">
+      <img class="frontpng" src="IMAGES/REPRODUCTOR_PHONAVI/FRENTECD.png" alt="">
+    </div>
+
+    <div class="album-meta" id="albumMeta">
+      <div class="meta-slide current" id="metaCurrent">
+        <div class="meta-artist" id="metaArtistCurrent"></div>
+        <div class="meta-title" id="metaTitleCurrent"></div>
       </div>
 
-      <div id="rightSpines" class="spines-group right"></div>
-    </section>
-  </main>
+      <div class="meta-slide next" id="metaNext">
+        <div class="meta-artist" id="metaArtistNext"></div>
+        <div class="meta-title" id="metaTitleNext"></div>
+      </div>
+    </div>
+  </div>
 
-  <script src="phonavi.js"></script>
+  <div class="spines" id="rightSpines"></div>
+
+  <img
+    class="phonavi-logo"
+    src="IMAGES/REPRODUCTOR_PHONAVI/phonavi_logo_discoteca.png"
+    alt="Phonavi">
+
+</div>
+
+<script src="phonavi.js"></script>
+
 </body>
 </html>
