@@ -1,120 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
-
-<title>Objeto 3D</title>
-
-<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noticiero Mental</title>
 
 <style>
-
 html,body{
   margin:0;
   width:100%;
   height:100%;
+  background:white;
   overflow:hidden;
-  background:black;
-  font-family:Arial, Helvetica, sans-serif;
 }
 
-/* BOTON PHONAVI */
-
-#phonaviButton{
-  position:fixed;
-  top:20px;
-  left:20px;
-  z-index:10001;
-  display:block;
-  text-decoration:none;
-  transform-origin:top left;
-  transition:
-  transform .18s cubic-bezier(.22,1,.36,1),
-  filter .18s ease;
-}
-
-#phonaviButton img{
-  display:block;
-  height:auto;
-  width:auto;
-  max-width:none;
-  transform:scale(.32);
-  transform-origin:top left;
-}
-
-#phonaviButton:hover{
-  transform:translateY(-3px) scale(1.04);
-  filter:brightness(1.06);
-}
-
-#phonaviButton:active{
-  transform:translateY(0) scale(.96);
-}
-
-/* SLIDER */
-
-#slider{
+body{
   display:flex;
-  height:100svh;
-  height:100dvh;
-  transition:transform 0.35s ease;
-}
-
-.page{
-  width:100vw;
-  height:100svh;
-  height:100dvh;
+  justify-content:center;
+  align-items:center;
   position:relative;
-  flex:0 0 100vw;
+}
+
+.crawl-container{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
   overflow:hidden;
-}
-
-#page1{ background:yellow; }
-
-.video-page{
-  background:black;
-}
-
-.custom-page{
-  background:black;
-}
-
-model-viewer{
-  width:100%;
-  height:100%;
-  background:transparent;
-}
-
-/* LOGO BUG */
-
-#logobug{
-  position:fixed;
-  top:20px;
-  right:20px;
-  width:150px;
-  height:150px;
-  z-index:9999;
+  z-index:1;
   pointer-events:none;
-  opacity:0;
-  visibility:hidden;
-  transition:opacity 0.25s ease, visibility 0.25s ease;
 }
 
-#logobug.show{
-  opacity:1;
-  visibility:visible;
+.crawl-track{
+  display:flex;
+  white-space:nowrap;
+  animation:crawl 20s linear infinite;
 }
 
-#logobug model-viewer{
-  width:100%;
-  height:100%;
+.crawl-word{
+  margin-right:200px;
+  font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size:200px;
+  line-height:1;
+  text-transform:uppercase;
+  color:#ff00b8;
+}
+
+.crawl-thin{ font-weight:200; }
+.crawl-bold{ font-weight:700; }
+
+@keyframes crawl{
+  0%{ transform:translateX(0); }
+  100%{ transform:translateX(-50%); }
+}
+
+video{
+  max-width:100vw;
+  max-height:100vh;
+  width:auto;
+  height:auto;
+  display:block;
   background:transparent;
+  position:relative;
+  z-index:2;
+}
+
+.phonavi-button{
+  position:absolute;
+  right:200px;
+  bottom:100px;
+  z-index:4;
+  transform:scale(.75);
+  transform-origin:center center;
+}
+
+.phonavi-button img{
+  display:block;
+  width:auto;
+  height:auto;
+  cursor:pointer;
 }
 
 /* FLECHAS */
@@ -122,26 +86,38 @@ model-viewer{
 .arrow{
   position:absolute;
   top:50%;
-  transform:translateY(-50%);
+  transform:translateY(-50%) scale(0.6);
+  transform-origin:center center;
   width:120px;
   height:120px;
   cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
-  z-index:20;
+  z-index:5;
+  text-decoration:none;
+}
+
+.arrow::after{
+  content:"";
+  position:absolute;
+  width:64px;
+  height:64px;
+  background:black;
+  z-index:0;
 }
 
 .arrow::before{
   content:"";
+  position:relative;
+  z-index:1;
   width:0;
   height:0;
   border-top:30px solid transparent;
   border-bottom:30px solid transparent;
-  border-left:48px solid rgba(255,255,255,0.75);
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+  border-left:48px solid #ff00b8;
   transition:opacity .25s ease, transform .25s ease;
-  opacity:0.75;
+  opacity:0.9;
 }
 
 .arrow:hover::before{
@@ -149,8 +125,8 @@ model-viewer{
   transform:scale(1.08);
 }
 
-.right{ right:20px; }
-.left{ left:20px; }
+.right{ right:0; }
+.left{ left:0; }
 
 .left::before{
   transform:rotate(180deg);
@@ -159,80 +135,38 @@ model-viewer{
 .left:hover::before{
   transform:rotate(180deg) scale(1.08);
 }
-
 </style>
 </head>
 
 <body>
 
-  <a id="phonaviButton" href="PHONAVI_web/phonavi.html">
-<img src="boton_phonavi.png" alt="Phonavi">
+<div class="crawl-container">
+  <div class="crawl-track">
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+  </div>
+</div>
+
+<video id="videocasetteVideo" autoplay muted loop playsinline>
+  <source src="VIDEOS/videocasette.webm" type="video/webm">
+</video>
+
+<a class="phonavi-button" href="PHONAVI_web/phonavi.html">
+  <img src="assets/IMAGES/BOTONES/BOTONTOPHONAVI.png" alt="Phonavi">
 </a>
 
-<div id="logobug">
-  <model-viewer
-    src="earth plateada.glb"
-    auto-rotate
-    auto-rotate-delay="0"
-    autoplay
-    exposure="1"
-    shadow-intensity="0"
-    interaction-prompt="none"
-    disable-zoom
-    disable-pan>
-  </model-viewer>
-</div>
-
-<div id="slider">
-
-<div class="page" id="page1">
-
-<model-viewer
-src="earth plateada.glb"
-camera-controls
-auto-rotate
-auto-rotate-delay="0"
-autoplay
-shadow-intensity="1"
-exposure="1">
-</model-viewer>
-
-<div class="arrow left" id="toWeather"></div>
-<div class="arrow right" id="toFirstVideo"></div>
-
-</div>
-
-</div>
+<a class="arrow left" href="sunset.html" aria-label="Ir a Sunset"></a>
+<a class="arrow right" href="bitch3d.html" aria-label="Ir a Bitch3D"></a>
 
 <script>
+const video = document.getElementById("videocasetteVideo");
 
-const videosData=[
-{src:"VIDEOS/bitch3d.webm",muted:false},
-{src:"VIDEOS/tuprimomarvin.webm",muted:false},
-{src:"VIDEOS/NOVALORAMOSVERS02.webm",muted:false},
-{src:"VIDEOS/Iambig.webm",muted:false}
-];
-
-const slider=document.getElementById("slider");
-const logobug=document.getElementById("logobug");
-
-function goToPage(page){
-const offset=(page-1)*100;
-slider.style.transform=`translateX(-${offset}vw)`;
-
-if(page===1){
-logobug.classList.remove("show");
-}else{
-logobug.classList.add("show");
-}
-}
-
-document.getElementById("toFirstVideo").onclick=()=>{
-goToPage(2);
-};
-
-goToPage(1);
-
+window.addEventListener("pageshow", () => {
+  video.load();
+  video.play().catch(() => {});
+});
 </script>
 
 </body>

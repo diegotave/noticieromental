@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Videocasette</title>
+
+<style>
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:white;
+  overflow:hidden;
+}
+
+body{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+}
+
+/* CRAWL */
+
+.crawl-container{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  z-index:1;
+  pointer-events:none;
+}
+
+.crawl-track{
+  display:flex;
+  white-space:nowrap;
+  animation:crawl 20s linear infinite;
+}
+
+.crawl-word{
+  margin-right:200px;
+  font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size:200px;
+  line-height:1;
+  text-transform:uppercase;
+  color:#ff00b8;
+}
+
+.crawl-thin{ font-weight:200; }
+.crawl-bold{ font-weight:700; }
+
+@keyframes crawl{
+  0%{ transform:translateX(0); }
+  100%{ transform:translateX(-50%); }
+}
+
+/* VIDEO */
+
+video{
+  max-width:100vw;
+  max-height:100vh;
+  width:auto;
+  height:auto;
+  display:block;
+  background:transparent;
+  position:relative;
+  z-index:2;
+}
+
+/* BOTON */
+
+.phonavi-button{
+  position:absolute;
+  right:200px;
+  bottom:100px;
+  z-index:4;
+  display:block;
+  transform:scale(.75);
+  transform-origin:center center;
+}
+
+.phonavi-button img{
+  width:auto;
+  height:auto;
+  display:block;
+  cursor:pointer;
+}
+
+/* FLECHAS */
+
+.arrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:120px;
+  height:120px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:5;
+  text-decoration:none;
+}
+
+.arrow::after{
+  content:"";
+  position:absolute;
+  width:64px;
+  height:64px;
+  background:black;
+  z-index:0;
+}
+
+.arrow::before{
+  content:"";
+  position:relative;
+  z-index:1;
+  width:0;
+  height:0;
+  border-top:30px solid transparent;
+  border-bottom:30px solid transparent;
+  border-left:48px solid #ff00b8;
+  transition:opacity .25s ease, transform .25s ease;
+  opacity:0.9;
+}
+
+.arrow:hover::before{
+  opacity:1;
+  transform:scale(1.08);
+}
+
+.right{ right:20px; }
+.left{ left:20px; }
+
+.left::before{
+  transform:rotate(180deg);
+}
+
+.left:hover::before{
+  transform:rotate(180deg) scale(1.08);
+}
+</style>
+</head>
+
+<body>
+
+<div class="crawl-container">
+  <div class="crawl-track">
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+    <div class="crawl-word"><span class="crawl-thin">NOTICIERO</span><span class="crawl-bold">MENTAL</span></div>
+  </div>
+</div>
+
+<video id="videocasetteVideo" autoplay muted loop playsinline>
+  <source src="VIDEOS/videocasette.webm" type="video/webm">
+</video>
+
+<a class="phonavi-button" href="PHONAVI_web/phonavi.html">
+  <img src="assets/IMAGES/BOTONES/BOTONTOPHONAVI.png" alt="Phonavi">
+</a>
+
+<a class="arrow left" id="toWeather" href="weather.html" aria-label="Ir al estado de la temperatura"></a>
+<a class="arrow right" id="toFirstVideo" href="primer-video.html" aria-label="Ir al primer video"></a>
+
+<script>
+const video = document.getElementById("videocasetteVideo");
+
+window.addEventListener("pageshow", () => {
+  video.load();
+  video.play().catch(() => {});
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunset</title>
+
+<style>
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:black;
+  overflow:hidden;
+}
+
+body{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+}
+
+video{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  background:black;
+}
+
+.arrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%) scale(0.6);
+  transform-origin:center center;
+  width:120px;
+  height:120px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:5;
+  text-decoration:none;
+}
+
+.arrow::after{
+  content:"";
+  position:absolute;
+  width:64px;
+  height:64px;
+  background:black;
+  z-index:0;
+}
+
+.arrow::before{
+  content:"";
+  position:relative;
+  z-index:1;
+  width:0;
+  height:0;
+  border-top:30px solid transparent;
+  border-bottom:30px solid transparent;
+  border-left:48px solid #ff00b8;
+  opacity:0.9;
+  transition:transform .2s ease;
+}
+
+.arrow:hover::before{
+  transform:scale(1.08);
+}
+
+.right{ right:0; }
+.left{ left:0; }
+
+.left::before{
+  transform:rotate(180deg);
+}
+
+.left:hover::before{
+  transform:rotate(180deg) scale(1.08);
+}
+</style>
+</head>
+
+<body>
+
+<video autoplay loop playsinline controls>
+  <source src="VIDEOS/Iambig.webm" type="video/webm">
+</video>
+
+<a class="arrow left" href="tuprimomarvin.html"></a>
+<a class="arrow right" href="index.html"></a>
+
+</body>
+</html>
