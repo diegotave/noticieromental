@@ -49,6 +49,15 @@ const opacityClassesNearToFar = [
   "op60"
 ];
 
+const saturationClassesNearToFar = [
+  "sat80",
+  "sat80",
+  "sat60",
+  "sat60",
+  "sat40",
+  "sat40"
+];
+
 let currentIndex = 0;
 let dragStartX = 0;
 let dragAccumulatedX = 0;
@@ -79,14 +88,14 @@ function getAlbumAt(index){
   return albums[normalizedIndex];
 }
 
-function createSpine(album, opacityClass, side, indexFromAnchor){
+function createSpine(album, opacityClass, saturationClass, side, indexFromAnchor){
   const spine = document.createElement("div");
   spine.className = `spine-wrap ${opacityClass}`;
   spine.dataset.side = side;
   spine.dataset.indexFromAnchor = String(indexFromAnchor);
   spine.innerHTML = `
-    <img class="spine-cover" src="${album.cover}" alt="${album.artist} - ${album.title}">
-    <img class="spinepng" src="IMAGES/REPRODUCTOR_PHONAVI/LOMOCD4.png" alt="">
+    <img class="spine-cover ${saturationClass}" src="${album.cover}" alt="${album.artist} - ${album.title}">
+    <img class="spinepng" src="IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png" alt="">
   `;
   return spine;
 }
@@ -200,22 +209,26 @@ function renderSpines(){
   leftSpinesEl.innerHTML = "";
   rightSpinesEl.innerHTML = "";
 
-  /* lado izquierdo: el ancla es el último elemento del bloque visual,
-     o sea el más cerca de TAPACD */
   for(let i = 6; i >= 1; i--){
     const album = getAlbumAt(currentIndex - i);
     const opacityClass = opacityClassesNearToFar[i - 1];
+    const saturationClass = saturationClassesNearToFar[i - 1];
     const indexFromAnchor = i - 1;
-    leftSpinesEl.appendChild(createSpine(album, opacityClass, "left", indexFromAnchor));
+
+    leftSpinesEl.appendChild(
+      createSpine(album, opacityClass, saturationClass, "left", indexFromAnchor)
+    );
   }
 
-  /* lado derecho: el ancla es el primer elemento del bloque visual,
-     o sea el más cerca de TAPACD */
   for(let i = 1; i <= 6; i++){
     const album = getAlbumAt(currentIndex + i);
     const opacityClass = opacityClassesNearToFar[i - 1];
+    const saturationClass = saturationClassesNearToFar[i - 1];
     const indexFromAnchor = i - 1;
-    rightSpinesEl.appendChild(createSpine(album, opacityClass, "right", indexFromAnchor));
+
+    rightSpinesEl.appendChild(
+      createSpine(album, opacityClass, saturationClass, "right", indexFromAnchor)
+    );
   }
 }
 
@@ -281,9 +294,6 @@ function updateSpineMotion(){
     let shift = 0;
 
     if(direction === 1){
-      /* vas a la derecha:
-         derecha expande desde su primer lomo
-         izquierda contrae hacia su primer lomo */
       if(side === "right"){
         shift = getExpandShift(indexFromAnchor, amount);
       }else{
@@ -291,9 +301,6 @@ function updateSpineMotion(){
       }
     }
     else if(direction === -1){
-      /* vas a la izquierda:
-         izquierda expande desde su primer lomo
-         derecha contrae hacia su primer lomo */
       if(side === "left"){
         shift = -getExpandShift(indexFromAnchor, amount);
       }else{
