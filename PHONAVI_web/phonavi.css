@@ -170,6 +170,7 @@ body{
  }
  
  .spine-wrap{
+   --spine-shift:0px;
    position:relative;
    height:460px;
    width:auto;
@@ -177,10 +178,11 @@ body{
    display:inline-block;
    border-radius:3px;
    flex:0 0 auto;
+   transform:translateX(var(--spine-shift));
    transition:
-     transform 280ms cubic-bezier(0.22,1,0.36,1),
-     opacity 220ms ease;
-   will-change:transform;
+     transform 460ms cubic-bezier(0.22,1,0.36,1),
+     opacity 240ms ease;
+   will-change:transform, opacity;
  }
  
  .spine-cover{

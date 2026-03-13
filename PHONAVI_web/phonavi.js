@@ -69,15 +69,21 @@ const MAX_DRAG_OFFSET = 34;
 const SMOOTHING = 0.18;
 const COVER_BASE_DURATION = 360;
 
+/* gesto de bloques */
+const SPINE_EXPAND_MAX = 8;
+const SPINE_CONTRACT_MAX = 6;
+
 function getAlbumAt(index){
   const total = albums.length;
   const normalizedIndex = ((index % total) + total) % total;
   return albums[normalizedIndex];
 }
 
-function createSpine(album, opacityClass){
+function createSpine(album, opacityClass, side, indexFromAnchor){
   const spine = document.createElement("div");
   spine.className = `spine-wrap ${opacityClass}`;
+  spine.dataset.side = side;
+  spine.dataset.indexFromAnchor = String(indexFromAnchor);
   spine.innerHTML = `
     <img class="spine-cover" src="${album.cover}" alt="${album.artist} - ${album.title}">
     <img class="spinepng" src="IMAGES/REPRODUCTOR_PHONAVI/LOMOCD4.png" alt="">
@@ -194,16 +200,22 @@ function renderSpines(){
   leftSpinesEl.innerHTML = "";
   rightSpinesEl.innerHTML = "";
 
+  /* lado izquierdo: el ancla es el último elemento del bloque visual,
+     o sea el más cerca de TAPACD */
   for(let i = 6; i >= 1; i--){
     const album = getAlbumAt(currentIndex - i);
     const opacityClass = opacityClassesNearToFar[i - 1];
-    leftSpinesEl.appendChild(createSpine(album, opacityClass));
+    const indexFromAnchor = i - 1;
+    leftSpinesEl.appendChild(createSpine(album, opacityClass, "left", indexFromAnchor));
   }
 
+  /* lado derecho: el ancla es el primer elemento del bloque visual,
+     o sea el más cerca de TAPACD */
   for(let i = 1; i <= 6; i++){
     const album = getAlbumAt(currentIndex + i);
     const opacityClass = opacityClassesNearToFar[i - 1];
-    rightSpinesEl.appendChild(createSpine(album, opacityClass));
+    const indexFromAnchor = i - 1;
+    rightSpinesEl.appendChild(createSpine(album, opacityClass, "right", indexFromAnchor));
   }
 }
 
@@ -216,6 +228,7 @@ function renderAll(initial = false, direction = 0){
 
   renderMeta(initial);
   renderSpines();
+  updateSpineMotion();
 }
 
 function moveCarousel(direction){
@@ -245,6 +258,53 @@ function getResistedOffset(value){
   return sign * eased * MAX_DRAG_OFFSET;
 }
 
+function getExpandShift(indexFromAnchor, amount){
+  return indexFromAnchor * SPINE_EXPAND_MAX * amount;
+}
+
+function getContractShift(indexFromAnchor, amount){
+  return indexFromAnchor * SPINE_CONTRACT_MAX * amount;
+}
+
+function updateSpineMotion(){
+  const allSpines = stageEl.querySelectorAll(".spine-wrap");
+  const amount = Math.min(Math.abs(visualOffset) / MAX_DRAG_OFFSET, 1);
+
+  let direction = 0;
+  if(visualOffset > 0.2) direction = 1;
+  else if(visualOffset < -0.2) direction = -1;
+
+  allSpines.forEach((spine) => {
+    const side = spine.dataset.side;
+    const indexFromAnchor = Number(spine.dataset.indexFromAnchor || 0);
+
+    let shift = 0;
+
+    if(direction === 1){
+      /* vas a la derecha:
+         derecha expande desde su primer lomo
+         izquierda contrae hacia su primer lomo */
+      if(side === "right"){
+        shift = getExpandShift(indexFromAnchor, amount);
+      }else{
+        shift = getContractShift(indexFromAnchor, amount);
+      }
+    }
+    else if(direction === -1){
+      /* vas a la izquierda:
+         izquierda expande desde su primer lomo
+         derecha contrae hacia su primer lomo */
+      if(side === "left"){
+        shift = -getExpandShift(indexFromAnchor, amount);
+      }else{
+        shift = -getContractShift(indexFromAnchor, amount);
+      }
+    }
+
+    spine.style.setProperty("--spine-shift", `${shift.toFixed(2)}px`);
+  });
+}
+
 function updateVisualState(){
   visualOffset += (targetOffset - visualOffset) * SMOOTHING;
 
@@ -256,6 +316,8 @@ function updateVisualState(){
 
   const elastic = Math.min(Math.abs(visualOffset) / MAX_DRAG_OFFSET, 1);
   stageEl.style.setProperty("--elastic", elastic.toFixed(3));
+
+  updateSpineMotion();
 
   requestAnimationFrame(updateVisualState);
 }
