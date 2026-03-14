@@ -1,0 +1,175 @@
+:root{
+
+  --base-w:1920;
+  --base-h:1080;
+
+  /* ACERCA DE */
+
+  --hit-x:344px;
+  --hit-y:171px;
+  --hit-w:63px;
+  --hit-h:63px;
+
+  --debug-hit-area:0;
+
+}
+
+
+/* =========================
+   ESCALA UI
+========================= */
+
+#ui-stage{
+
+position:fixed;
+left:50%;
+top:50%;
+
+width:1920px;
+height:1080px;
+
+transform:translate(-50%,-50%) scale(1);
+transform-origin:center center;
+
+pointer-events:none;
+
+z-index:6;
+
+}
+
+
+/* =========================
+   BOTON ACERCA DE
+========================= */
+
+#acercaDeVisual{
+
+position:absolute;
+inset:0;
+
+width:100%;
+height:100%;
+
+display:block;
+
+object-fit:fill;
+
+pointer-events:none;
+
+user-select:none;
+-webkit-user-drag:none;
+
+}
+
+#acercaDeTrigger{
+
+position:absolute;
+
+left:var(--hit-x);
+top:var(--hit-y);
+
+width:var(--hit-w);
+height:var(--hit-h);
+
+margin:0;
+padding:0;
+
+border:none;
+outline:none;
+
+background:rgba(255,255,255,calc(var(--debug-hit-area)*0.18));
+
+cursor:pointer;
+
+pointer-events:auto;
+
+appearance:none;
+-webkit-appearance:none;
+
+border-radius:0;
+
+}
+
+#acercaDeTrigger::after{
+
+content:"";
+
+position:absolute;
+inset:0;
+
+border:calc(var(--debug-hit-area)*2px) solid rgba(255,0,184,0.9);
+
+pointer-events:none;
+
+box-sizing:border-box;
+
+}
+
+#acercaDeTrigger:focus-visible{
+
+box-shadow:0 0 0 2px rgba(255,0,184,0.9);
+
+}
+
+
+/* =========================
+   BOTON PHONAVI
+========================= */
+
+#phonavi-stage{
+
+position:fixed;
+
+left:50%;
+top:50%;
+
+width:1920px;
+height:1080px;
+
+transform:translate(-50%,-50%) scale(1);
+
+transform-origin:center center;
+
+pointer-events:none;
+
+z-index:4;
+
+}
+
+#phonaviVisual{
+
+position:absolute;
+
+inset:0;
+
+width:100%;
+height:100%;
+
+object-fit:fill;
+
+pointer-events:none;
+
+}
+
+#phonaviTrigger{
+  position:absolute;
+  left:1400px;
+  top:728px;
+  width:245px;
+  height:245px;
+  display:block;
+  pointer-events:auto;
+  cursor:pointer;
+  text-decoration:none;
+  background:transparent;
+}
+
+
+/* DEBUG OPCIONAL */
+
+#phonaviTrigger.debug{
+
+background:rgba(255,0,184,0.2);
+outline:2px solid #ff00b8;
+
+}

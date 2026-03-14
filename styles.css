@@ -1,0 +1,66 @@
+:root{
+  --base-w: 1920;
+  --base-h: 1080;
+
+  /* AJUSTAR */
+  --hit-x: 1580px;
+  --hit-y: 70px;
+  --hit-w: 220px;
+  --hit-h: 120px;
+
+  --debug-hit-area: 0;
+}
+
+#ui-stage{
+  position:fixed;
+  left:50%;
+  top:50%;
+  width:1920px;
+  height:1080px;
+  transform:translate(-50%, -50%) scale(1);
+  transform-origin:center center;
+  pointer-events:none;
+  z-index:9999;
+}
+
+#acercaDeVisual{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:fill;
+  user-select:none;
+  -webkit-user-drag:none;
+  pointer-events:none;
+}
+
+#acercaDeTrigger{
+  position:absolute;
+  left:var(--hit-x);
+  top:var(--hit-y);
+  width:var(--hit-w);
+  height:var(--hit-h);
+  margin:0;
+  padding:0;
+  border:none;
+  background:rgba(255,255,255,calc(var(--debug-hit-area) * 0.12));
+  outline:none;
+  cursor:pointer;
+  pointer-events:auto;
+  appearance:none;
+  -webkit-appearance:none;
+  border-radius:0;
+}
+
+#acercaDeTrigger:focus-visible{
+  box-shadow:0 0 0 3px rgba(255,255,255,0.9);
+}
+
+#acercaDeTrigger::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:calc(var(--debug-hit-area) * 1px) solid rgba(255,255,255,0.65);
+  pointer-events:none;
+}

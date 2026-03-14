@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Noticiero Mental</title>
 
+<link rel="stylesheet" href="boton-acercade.css">
+
 <style>
 html,body{
   margin:0;
@@ -64,24 +66,6 @@ video{
   position:relative;
   z-index:2;
 }
-
-.phonavi-button{
-  position:absolute;
-  right:200px;
-  bottom:100px;
-  z-index:4;
-  transform:scale(.75);
-  transform-origin:center center;
-}
-
-.phonavi-button img{
-  display:block;
-  width:auto;
-  height:auto;
-  cursor:pointer;
-}
-
-/* FLECHAS */
 
 .arrow{
   position:absolute;
@@ -153,12 +137,26 @@ video{
   <source src="VIDEOS/videocasette.webm" type="video/webm">
 </video>
 
-<a class="phonavi-button" href="PHONAVI_web/phonavi.html">
-  <img src="assets/IMAGES/BOTONES/BOTONTOPHONAVI.png" alt="Phonavi">
-</a>
 
-<a class="arrow left" href="sunset.html" aria-label="Ir a Sunset"></a>
-<a class="arrow right" href="bitch3d.html" aria-label="Ir a Bitch3D"></a>
+<!-- BOTON PHONAVI NUEVO -->
+<div id="phonavi-stage">
+<img id="phonaviVisual" src="assets/IMAGES/BOTONES/BOTONTOPHONAVI.png">
+<a id="phonaviTrigger" href="PHONAVI_web/phonavi.html"></a>
+</div>
+
+
+<a class="arrow left" href="sunset.html"></a>
+<a class="arrow right" href="bitch3d.html"></a>
+
+
+<!-- BOTON ACERCA DE (NO SE TOCA) -->
+<div id="ui-stage" aria-hidden="true">
+  <img id="acercaDeVisual" src="BOTON/AcercaDe_00000.png" alt="" draggable="false">
+  <button id="acercaDeTrigger" type="button"></button>
+</div>
+
+<script src="boton-acercade.js"></script>
+<script src="phonavi.js"></script>
 
 <script>
 const video = document.getElementById("videocasetteVideo");
