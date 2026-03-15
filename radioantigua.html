@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<title>Radio Antigua</title>
+
+<style>
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:white;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.stage{
+  width:100vw;
+  height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:white;
+}
+
+.radio-button{
+  width:100vw;
+  height:100dvh;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform-origin:center;
+}
+
+.radio-button.bounce{
+  animation:press 220ms ease;
+}
+
+@keyframes press{
+  0%   {transform:scale(1);}
+  40%  {transform:scale(0.985);}
+  70%  {transform:scale(1.01);}
+  100% {transform:scale(1);}
+}
+
+.radio-image{
+  width:100%;
+  height:100%;
+  object-fit:cover;      /* se adapta recortando */
+  object-position:center;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="stage">
+
+<button class="radio-button" id="radioBtn">
+
+<img
+id="radioImg"
+class="radio-image"
+src="assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png"
+alt="Radio antigua"
+/>
+
+</button>
+
+</div>
+
+<script>
+
+const BASE_PATH = "assets/IMAGES/radioantigua/radioantigua_armado";
+const PREFIX = "radioantigua_";
+const EXT = ".png";
+
+const FIRST = 0;
+const LAST = 28;
+
+const FRAME_TIME = 50;
+
+const img = document.getElementById("radioImg");
+const btn = document.getElementById("radioBtn");
+
+let playing = false;
+let current = FIRST;
+
+function framePath(n){
+
+let num = String(n).padStart(2,"0");
+return BASE_PATH + "/" + PREFIX + num + EXT;
+
+}
+
+function setFrame(n){
+
+current = n;
+img.src = framePath(n);
+
+}
+
+async function play(){
+
+if(playing) return;
+if(current === LAST) return;
+
+playing = true;
+
+btn.classList.remove("bounce");
+void btn.offsetWidth;
+btn.classList.add("bounce");
+
+for(let i=current+1;i<=LAST;i++){
+
+setFrame(i);
+
+await new Promise(r=>setTimeout(r,FRAME_TIME));
+
+}
+
+setFrame(LAST);
+
+playing = false;
+
+}
+
+btn.addEventListener("click",play);
+
+setFrame(FIRST);
+
+</script>
+
+</body>
+</html>
