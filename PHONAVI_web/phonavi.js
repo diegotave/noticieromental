@@ -1,376 +1,643 @@
-const albums = [
-  {
-    artist: "Lady Gaga",
-    title: "Album name",
-    cover: "CDS/Lady_gaga-disc_name/cover1.jpg"
-  },
-  {
-    artist: "Howe Gelb",
-    title: "Album name",
-    cover: "CDS/Howe_Gelb-disc_name/Front.jpg"
-  },
-  {
-    artist: "The Clash",
-    title: "London Calling",
-    cover: "CDS/TheClash_London calling/cover.jpg"
-  },
-  {
-    artist: "Cindy Lauper",
-    title: "She's So Unusual",
-    cover: "CDS/Cindy Lauper - She/covercindy.jpg"
-  },
-  {
-    artist: "Nirvana",
-    title: "Nevermind",
-    cover: "CDS/Nirvana-nevermind/covernirvana.jpg"
-  }
-];
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Radio Antigua</title>
 
-const leftSpinesEl = document.getElementById("leftSpines");
-const rightSpinesEl = document.getElementById("rightSpines");
-const stageEl = document.getElementById("stage");
-
-const frontDiscEl = document.getElementById("frontDisc");
-const frontCoverAEl = document.getElementById("frontCoverA");
-const frontCoverBEl = document.getElementById("frontCoverB");
-
-const albumMetaEl = document.getElementById("albumMeta");
-const metaArtistCurrentEl = document.getElementById("metaArtistCurrent");
-const metaTitleCurrentEl = document.getElementById("metaTitleCurrent");
-const metaArtistNextEl = document.getElementById("metaArtistNext");
-const metaTitleNextEl = document.getElementById("metaTitleNext");
-
-const opacityClassesNearToFar = [
-  "op100",
-  "op100",
-  "op80",
-  "op80",
-  "op60",
-  "op60"
-];
-
-const saturationClassesNearToFar = [
-  "sat80",
-  "sat80",
-  "sat60",
-  "sat60",
-  "sat40",
-  "sat40"
-];
-
-let currentIndex = 0;
-let dragStartX = 0;
-let dragAccumulatedX = 0;
-let isDragging = false;
-
-let targetOffset = 0;
-let visualOffset = 0;
-
-let metaSwitchTimeout = null;
-let coverSwitchTimeout = null;
-
-let activeCoverEl = frontCoverAEl;
-let inactiveCoverEl = frontCoverBEl;
-let isAnimatingCover = false;
-
-const STEP_THRESHOLD = 70;
-const MAX_DRAG_OFFSET = 34;
-const SMOOTHING = 0.18;
-const COVER_BASE_DURATION = 360;
-
-/* gesto de bloques */
-const SPINE_EXPAND_MAX = 8;
-const SPINE_CONTRACT_MAX = 6;
-
-function getAlbumAt(index){
-  const total = albums.length;
-  const normalizedIndex = ((index % total) + total) % total;
-  return albums[normalizedIndex];
-}
-
-function createSpine(album, opacityClass, saturationClass, side, indexFromAnchor){
-  const spine = document.createElement("div");
-  spine.className = `spine-wrap ${opacityClass}`;
-  spine.dataset.side = side;
-  spine.dataset.indexFromAnchor = String(indexFromAnchor);
-  spine.innerHTML = `
-    <img class="spine-cover ${saturationClass}" src="${album.cover}" alt="${album.artist} - ${album.title}">
-    <img class="spinepng" src="IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png" alt="">
-  `;
-  return spine;
-}
-
-function setCoverInstant(el, src, alt){
-  el.src = src;
-  el.alt = alt;
-  el.style.transition = "none";
-  el.style.transform = "translateX(0)";
-}
-
-function renderFrontInitial(){
-  const currentAlbum = getAlbumAt(currentIndex);
-  const altText = `${currentAlbum.artist} - ${currentAlbum.title}`;
-
-  setCoverInstant(activeCoverEl, currentAlbum.cover, altText);
-
-  inactiveCoverEl.src = currentAlbum.cover;
-  inactiveCoverEl.alt = altText;
-  inactiveCoverEl.style.transition = "none";
-  inactiveCoverEl.style.transform = "translateX(100%)";
-}
-
-function animateFront(direction){
-  if(isAnimatingCover) return;
-
-  const currentAlbum = getAlbumAt(currentIndex);
-  const altText = `${currentAlbum.artist} - ${currentAlbum.title}`;
-
-  const outgoingEl = activeCoverEl;
-  const incomingEl = inactiveCoverEl;
-
-  const travelDirection = direction === 1 ? 1 : -1;
-  const incomingStart = -100 * travelDirection;
-  const outgoingEnd = 100 * travelDirection;
-
-  const elasticFactor = Math.min(Math.abs(targetOffset) / MAX_DRAG_OFFSET, 1);
-  const duration = Math.round(COVER_BASE_DURATION + (elasticFactor * 70));
-
-  clearTimeout(coverSwitchTimeout);
-  isAnimatingCover = true;
-
-  incomingEl.src = currentAlbum.cover;
-  incomingEl.alt = altText;
-
-  outgoingEl.style.transition = "none";
-  incomingEl.style.transition = "none";
-
-  outgoingEl.style.transform = "translateX(0)";
-  incomingEl.style.transform = `translateX(${incomingStart}%)`;
-
-  if(travelDirection === 1){
-    outgoingEl.style.zIndex = "1";
-    incomingEl.style.zIndex = "2";
-  }else{
-    outgoingEl.style.zIndex = "2";
-    incomingEl.style.zIndex = "1";
-  }
-
-  void frontDiscEl.offsetWidth;
-
-  const transitionValue = `transform ${duration}ms cubic-bezier(0.22,1,0.36,1)`;
-
-  outgoingEl.style.transition = transitionValue;
-  incomingEl.style.transition = transitionValue;
-
-  outgoingEl.style.transform = `translateX(${outgoingEnd}%)`;
-  incomingEl.style.transform = "translateX(0)";
-
-  coverSwitchTimeout = setTimeout(() => {
-    outgoingEl.style.transition = "none";
-    incomingEl.style.transition = "none";
-
-    outgoingEl.style.transform = `translateX(${outgoingEnd}%)`;
-    incomingEl.style.transform = "translateX(0)";
-
-    activeCoverEl = incomingEl;
-    inactiveCoverEl = outgoingEl;
-
-    isAnimatingCover = false;
-  }, duration);
-}
-
-function renderMeta(initial = false){
-  const currentAlbum = getAlbumAt(currentIndex);
-
-  if(initial){
-    metaArtistCurrentEl.textContent = currentAlbum.artist;
-    metaTitleCurrentEl.textContent = currentAlbum.title;
-    metaArtistNextEl.textContent = currentAlbum.artist;
-    metaTitleNextEl.textContent = currentAlbum.title;
-    return;
-  }
-
-  metaArtistNextEl.textContent = currentAlbum.artist;
-  metaTitleNextEl.textContent = currentAlbum.title;
-
-  albumMetaEl.classList.remove("switching");
-  void albumMetaEl.offsetWidth;
-  albumMetaEl.classList.add("switching");
-
-  clearTimeout(metaSwitchTimeout);
-  metaSwitchTimeout = setTimeout(() => {
-    metaArtistCurrentEl.textContent = currentAlbum.artist;
-    metaTitleCurrentEl.textContent = currentAlbum.title;
-    albumMetaEl.classList.remove("switching");
-  }, 180);
-}
-
-function renderSpines(){
-  leftSpinesEl.innerHTML = "";
-  rightSpinesEl.innerHTML = "";
-
-  for(let i = 6; i >= 1; i--){
-    const album = getAlbumAt(currentIndex - i);
-    const opacityClass = opacityClassesNearToFar[i - 1];
-    const saturationClass = saturationClassesNearToFar[i - 1];
-    const indexFromAnchor = i - 1;
-
-    leftSpinesEl.appendChild(
-      createSpine(album, opacityClass, saturationClass, "left", indexFromAnchor)
-    );
-  }
-
-  for(let i = 1; i <= 6; i++){
-    const album = getAlbumAt(currentIndex + i);
-    const opacityClass = opacityClassesNearToFar[i - 1];
-    const saturationClass = saturationClassesNearToFar[i - 1];
-    const indexFromAnchor = i - 1;
-
-    rightSpinesEl.appendChild(
-      createSpine(album, opacityClass, saturationClass, "right", indexFromAnchor)
-    );
-  }
-}
-
-function renderAll(initial = false, direction = 0){
-  if(initial){
-    renderFrontInitial();
-  }else{
-    animateFront(direction);
-  }
-
-  renderMeta(initial);
-  renderSpines();
-  updateSpineMotion();
-}
-
-function moveCarousel(direction){
-  if(isAnimatingCover) return;
-
-  currentIndex += direction;
-  renderAll(false, direction);
-}
-
-function getClientX(event){
-  if(event.touches && event.touches.length > 0){
-    return event.touches[0].clientX;
-  }
-
-  if(event.changedTouches && event.changedTouches.length > 0){
-    return event.changedTouches[0].clientX;
-  }
-
-  return event.clientX;
-}
-
-function getResistedOffset(value){
-  const clamped = Math.max(-STEP_THRESHOLD, Math.min(STEP_THRESHOLD, value));
-  const sign = clamped < 0 ? -1 : 1;
-  const amount = Math.abs(clamped) / STEP_THRESHOLD;
-  const eased = 1 - Math.pow(1 - amount, 2);
-  return sign * eased * MAX_DRAG_OFFSET;
-}
-
-function getExpandShift(indexFromAnchor, amount){
-  return indexFromAnchor * SPINE_EXPAND_MAX * amount;
-}
-
-function getContractShift(indexFromAnchor, amount){
-  return indexFromAnchor * SPINE_CONTRACT_MAX * amount;
-}
-
-function updateSpineMotion(){
-  const allSpines = stageEl.querySelectorAll(".spine-wrap");
-  const amount = Math.min(Math.abs(visualOffset) / MAX_DRAG_OFFSET, 1);
-
-  let direction = 0;
-  if(visualOffset > 0.2) direction = 1;
-  else if(visualOffset < -0.2) direction = -1;
-
-  allSpines.forEach((spine) => {
-    const side = spine.dataset.side;
-    const indexFromAnchor = Number(spine.dataset.indexFromAnchor || 0);
-
-    let shift = 0;
-
-    if(direction === 1){
-      if(side === "right"){
-        shift = getExpandShift(indexFromAnchor, amount);
-      }else{
-        shift = getContractShift(indexFromAnchor, amount);
-      }
-    }
-    else if(direction === -1){
-      if(side === "left"){
-        shift = -getExpandShift(indexFromAnchor, amount);
-      }else{
-        shift = -getContractShift(indexFromAnchor, amount);
-      }
+  <style>
+    :root{
+      --bg: #ffffff;
+      --dial-center-x: 50%;
+      --dial-center-y: 50%;
+      --dial-size: 71.55%;
+      --ring-color: #c92cff;
+      --opacity-active: 1;
+      --opacity-inactive: 0.30;
+      --slot-transition: 560ms cubic-bezier(.22,.78,.18,1);
+      --bounce-down: 0.985;
+      --bounce-up: 1.01;
     }
 
-    spine.style.setProperty("--spine-shift", `${shift.toFixed(2)}px`);
-  });
-}
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:var(--bg);
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-function updateVisualState(){
-  visualOffset += (targetOffset - visualOffset) * SMOOTHING;
+    body{
+      background:#fff;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
 
-  if(Math.abs(targetOffset - visualOffset) < 0.05){
-    visualOffset = targetOffset;
-  }
+    .stage{
+      position:relative;
+      width:100vw;
+      height:100dvh;
+      overflow:hidden;
+      background:#fff;
+    }
 
-  stageEl.style.transform = `translateX(${visualOffset}px)`;
+    .radio-button{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      border:none;
+      background:transparent;
+      padding:0;
+      margin:0;
+      cursor:pointer;
+      display:block;
+      transform-origin:center center;
+    }
 
-  const elastic = Math.min(Math.abs(visualOffset) / MAX_DRAG_OFFSET, 1);
-  stageEl.style.setProperty("--elastic", elastic.toFixed(3));
+    .radio-button.bounce{
+      animation: press 220ms ease;
+    }
 
-  updateSpineMotion();
+    @keyframes press{
+      0%   { transform:scale(1); }
+      40%  { transform:scale(var(--bounce-down)); }
+      70%  { transform:scale(var(--bounce-up)); }
+      100% { transform:scale(1); }
+    }
 
-  requestAnimationFrame(updateVisualState);
-}
+    .radio-image{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+      display:block;
+    }
 
-function onDragStart(event){
-  isDragging = true;
-  dragStartX = getClientX(event);
-  dragAccumulatedX = 0;
-  stageEl.classList.add("dragging");
-}
+    .dial-overlay{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      opacity:0;
+      transition:opacity 220ms ease;
+    }
 
-function onDragMove(event){
-  if(!isDragging) return;
+    .dial-overlay.visible{
+      opacity:1;
+    }
 
-  const currentX = getClientX(event);
-  dragAccumulatedX = currentX - dragStartX;
-  targetOffset = getResistedOffset(dragAccumulatedX);
+    .dial-area{
+      position:absolute;
+      left:calc(var(--dial-center-x) - var(--dial-size) / 2);
+      top:calc(var(--dial-center-y) - var(--dial-size) / 2);
+      width:var(--dial-size);
+      height:var(--dial-size);
+      pointer-events:none;
+      overflow:visible;
+    }
 
-  if(dragAccumulatedX <= -STEP_THRESHOLD){
-    moveCarousel(1);
-    dragStartX = currentX;
-    dragAccumulatedX = 0;
-    targetOffset = -MAX_DRAG_OFFSET * 0.35;
-  }
-  else if(dragAccumulatedX >= STEP_THRESHOLD){
-    moveCarousel(-1);
-    dragStartX = currentX;
-    dragAccumulatedX = 0;
-    targetOffset = MAX_DRAG_OFFSET * 0.35;
-  }
-}
+    .menu-layer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:visible;
+    }
 
-function onDragEnd(){
-  isDragging = false;
-  dragAccumulatedX = 0;
-  targetOffset = 0;
-  stageEl.classList.remove("dragging");
-}
+    .ring-item{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:100%;
+      height:100%;
+      transform-origin:center center;
+      transition:
+        transform var(--slot-transition),
+        opacity var(--slot-transition),
+        filter var(--slot-transition);
+      will-change: transform, opacity;
+      pointer-events:none;
+    }
 
-stageEl.addEventListener("mousedown", onDragStart);
-window.addEventListener("mousemove", onDragMove);
-window.addEventListener("mouseup", onDragEnd);
+    .ring-item.hidden{
+      opacity:0;
+    }
 
-stageEl.addEventListener("touchstart", onDragStart, { passive:true });
-window.addEventListener("touchmove", onDragMove, { passive:true });
-window.addEventListener("touchend", onDragEnd);
+    .ring-svg{
+      width:100%;
+      height:100%;
+      overflow:visible;
+      display:block;
+    }
 
-renderAll(true, 0);
-updateVisualState();
+    .ring-text{
+      fill:var(--ring-color);
+      font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-weight:100;
+      text-transform:uppercase;
+      user-select:none;
+      pointer-events:none;
+      dominant-baseline:middle;
+      text-rendering:geometricPrecision;
+    }
+
+    @media (max-aspect-ratio: 3/4){
+      :root{
+        --dial-center-x: 50%;
+        --dial-center-y: 50%;
+        --dial-size: 93%;
+      }
+
+      .radio-image{
+        object-fit:cover;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="stage" id="stage">
+    <button class="radio-button" id="radioBtn" aria-label="Activar radio antigua">
+      <img
+        id="radioImg"
+        class="radio-image"
+        src="assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png"
+        alt="Radio antigua"
+      />
+    </button>
+
+    <div class="dial-overlay" id="dialOverlay" aria-hidden="true">
+      <div class="dial-area" id="dialArea">
+        <div class="menu-layer" id="menuLayer"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_PATH = "assets/IMAGES/radioantigua/radioantigua_armado";
+    const PREFIX = "radioantigua_";
+    const EXT = ".png";
+    const FIRST = 0;
+    const LAST = 28;
+    const FRAME_TIME = 50;
+
+    const radioBtn = document.getElementById("radioBtn");
+    const radioImg = document.getElementById("radioImg");
+    const dialOverlay = document.getElementById("dialOverlay");
+    const menuLayer = document.getElementById("menuLayer");
+    const stage = document.getElementById("stage");
+
+    let playing = false;
+    let currentFrame = FIRST;
+    let radioOpened = false;
+    let hasUserGesture = false;
+
+    function framePath(n){
+      const num = String(n).padStart(2, "0");
+      return `${BASE_PATH}/${PREFIX}${num}${EXT}`;
+    }
+
+    function setFrame(n){
+      currentFrame = n;
+      radioImg.src = framePath(n);
+    }
+
+    async function playRadioSequence(){
+      if(playing || radioOpened) return;
+
+      playing = true;
+      hasUserGesture = true;
+
+      radioBtn.classList.remove("bounce");
+      void radioBtn.offsetWidth;
+      radioBtn.classList.add("bounce");
+
+      for(let i = currentFrame + 1; i <= LAST; i++){
+        setFrame(i);
+        await new Promise(r => setTimeout(r, FRAME_TIME));
+      }
+
+      setFrame(LAST);
+      playing = false;
+      radioOpened = true;
+
+      menuSystem.enabled = true;
+      dialOverlay.classList.add("visible");
+      dialOverlay.setAttribute("aria-hidden", "false");
+      menuSystem.activateCurrentFeed();
+    }
+
+    radioBtn.addEventListener("click", playRadioSequence);
+    setFrame(FIRST);
+
+    const feeds = [
+      {
+        id: "techno",
+        title: "FEED TECHNO",
+        streamUrl: "",
+        spinSpeed: 0.0105
+      },
+      {
+        id: "peces",
+        title: "FEED PECES",
+        streamUrl: "",
+        spinSpeed: -0.0088
+      },
+      {
+        id: "lava",
+        title: "FEED LAVA",
+        streamUrl: "",
+        spinSpeed: 0.0078
+      },
+      {
+        id: "selva",
+        title: "FEED SELVA",
+        streamUrl: "",
+        spinSpeed: -0.0094
+      },
+      {
+        id: "cemento",
+        title: "FEED CEMENTO",
+        streamUrl: "",
+        spinSpeed: 0.0084
+      }
+    ];
+
+    const feedAudio = new Audio();
+    feedAudio.crossOrigin = "anonymous";
+    feedAudio.preload = "none";
+    feedAudio.loop = false;
+
+    function playFeed(index){
+      const feed = feeds[mod(index, feeds.length)];
+      if(!feed || !feed.streamUrl) return;
+      if(!hasUserGesture) return;
+
+      if(feedAudio.src !== feed.streamUrl){
+        feedAudio.src = feed.streamUrl;
+      }
+
+      feedAudio.play().catch(() => {});
+    }
+
+    function mod(n, m){
+      return ((n % m) + m) % m;
+    }
+
+    function lerp(a, b, t){
+      return a + (b - a) * t;
+    }
+
+    function measureTextExact(textValue, fontSize, letterSpacing, isActive){
+      const svgNS = "http://www.w3.org/2000/svg";
+
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.style.position = "absolute";
+      svg.style.visibility = "hidden";
+      svg.style.pointerEvents = "none";
+      svg.style.left = "-99999px";
+      svg.style.top = "-99999px";
+
+      const text = document.createElementNS(svgNS, "text");
+      text.textContent = textValue;
+      text.setAttribute("font-size", String(fontSize));
+      text.setAttribute("letter-spacing", String(letterSpacing));
+      text.setAttribute("font-family", '"Helvetica Neue", Helvetica, Arial, sans-serif');
+      text.setAttribute("font-weight", isActive ? "700" : "100");
+
+      svg.appendChild(text);
+      document.body.appendChild(svg);
+
+      const length = text.getComputedTextLength();
+
+      document.body.removeChild(svg);
+      return length;
+    }
+
+    function buildLoopString(title, radius, fontSize, letterSpacing, isActive = false){
+      const circumference = 2 * Math.PI * radius;
+      const safeLength = circumference - 12;
+      const gap = "        ";
+
+      let count = 1;
+      let best = title;
+
+      while(true){
+        const candidate = Array(count).fill(title).join(gap);
+        const length = measureTextExact(candidate, fontSize, letterSpacing, isActive);
+
+        if(length <= safeLength){
+          best = candidate;
+          count++;
+        }else{
+          break;
+        }
+
+        if(count > 40){
+          break;
+        }
+      }
+
+      return best;
+    }
+
+    function circlePathD(cx, cy, r){
+      return [
+        `M ${cx - r}, ${cy}`,
+        `a ${r},${r} 0 1,1 ${r * 2},0`,
+        `a ${r},${r} 0 1,1 -${r * 2},0`
+      ].join(" ");
+    }
+
+    const SLOT_OUTER = {
+      name: "outer",
+      x: 0,
+      y: 0,
+      scale: 1.16,
+      opacity: 0.30,
+      radius: 360,
+      fontSize: 92,
+      letterSpacing: 5.4
+    };
+
+    const SLOT_ACTIVE = {
+      name: "active",
+      x: 0,
+      y: 0,
+      scale: 1.00,
+      opacity: 1.00,
+      radius: 333.3,
+      fontSize: 88.4,
+      letterSpacing: 6.2
+    };
+
+    const SLOT_INNER = {
+      name: "inner",
+      x: 0,
+      y: 0,
+      scale: 0.78,
+      opacity: 0.30,
+      radius: 306.6,
+      fontSize: 124.8,
+      letterSpacing: 3.2
+    };
+
+    class RingVisual {
+      constructor(feed, feedIndex){
+        this.feed = feed;
+        this.feedIndex = feedIndex;
+
+        this.spinAngle = 0;
+        this.targetSlot = null;
+
+        this.displayX = 0;
+        this.displayY = 0;
+        this.displayScale = 1;
+        this.displayOpacity = 0;
+        this.displayRadius = 250;
+        this.displayFontSize = 24;
+        this.displayLetterSpacing = 2;
+
+        this.targetX = 0;
+        this.targetY = 0;
+        this.targetScale = 1;
+        this.targetOpacity = 0;
+        this.targetRadius = 250;
+        this.targetFontSize = 24;
+        this.targetLetterSpacing = 2;
+
+        this.el = document.createElement("div");
+        this.el.className = "ring-item hidden";
+
+        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        this.svg.setAttribute("class", "ring-svg");
+        this.svg.setAttribute("viewBox", "0 0 1000 1000");
+        this.svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+        this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        this.pathId = `ringPath_${feed.id}_${feedIndex}`;
+        this.path.setAttribute("id", this.pathId);
+        this.path.setAttribute("fill", "none");
+
+        this.text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        this.text.setAttribute("class", "ring-text");
+
+        this.textPath = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
+        this.textPath.setAttributeNS("http://www.w3.org/1999/xlink", "href", `#${this.pathId}`);
+        this.textPath.setAttribute("startOffset", "0%");
+
+        this.text.appendChild(this.textPath);
+        this.svg.appendChild(this.path);
+        this.svg.appendChild(this.text);
+        this.el.appendChild(this.svg);
+        menuLayer.appendChild(this.el);
+      }
+
+      setTargetFromSlot(slot){
+        this.targetSlot = slot;
+        this.targetX = slot.x;
+        this.targetY = slot.y;
+        this.targetScale = slot.scale;
+        this.targetOpacity = slot.opacity;
+        this.targetRadius = slot.radius;
+        this.targetFontSize = slot.fontSize;
+        this.targetLetterSpacing = slot.letterSpacing;
+      }
+
+      hide(){
+        this.targetSlot = null;
+        this.targetOpacity = 0;
+      }
+
+      snapToTarget(){
+        this.displayX = this.targetX;
+        this.displayY = this.targetY;
+        this.displayScale = this.targetScale;
+        this.displayOpacity = this.targetOpacity;
+        this.displayRadius = this.targetRadius;
+        this.displayFontSize = this.targetFontSize;
+        this.displayLetterSpacing = this.targetLetterSpacing;
+      }
+
+      update(dt){
+        this.spinAngle += this.feed.spinSpeed * dt;
+
+        this.displayX = lerp(this.displayX, this.targetX, 0.12);
+        this.displayY = lerp(this.displayY, this.targetY, 0.12);
+        this.displayScale = lerp(this.displayScale, this.targetScale, 0.12);
+        this.displayOpacity = lerp(this.displayOpacity, this.targetOpacity, 0.12);
+        this.displayRadius = lerp(this.displayRadius, this.targetRadius, 0.12);
+        this.displayFontSize = lerp(this.displayFontSize, this.targetFontSize, 0.12);
+        this.displayLetterSpacing = lerp(this.displayLetterSpacing, this.targetLetterSpacing, 0.12);
+
+        const visible = this.displayOpacity > 0.01;
+        this.el.classList.toggle("hidden", !visible);
+
+        const cx = 500;
+        const cy = 500;
+        this.path.setAttribute("d", circlePathD(cx, cy, this.displayRadius));
+
+        this.text.setAttribute("font-size", this.displayFontSize.toFixed(2));
+        this.text.setAttribute("letter-spacing", this.displayLetterSpacing.toFixed(2));
+
+        const isActive = this.targetSlot && this.targetSlot.name === "active";
+
+        this.text.setAttribute("font-family", '"Helvetica Neue", Helvetica, Arial, sans-serif');
+        this.text.setAttribute("font-weight", isActive ? "700" : "100");
+
+        const loopText = buildLoopString(
+          this.feed.title,
+          this.displayRadius,
+          this.displayFontSize,
+          this.displayLetterSpacing,
+          isActive
+        );
+        this.textPath.textContent = loopText;
+
+        this.el.style.opacity = this.displayOpacity.toFixed(4);
+
+        const rotDeg = this.spinAngle * 180 / Math.PI;
+        this.el.style.transform = `
+          translate(-50%, -50%)
+          translate(${this.displayX}px, ${this.displayY}px)
+          scale(${this.displayScale})
+          rotate(${rotDeg}deg)
+        `;
+      }
+    }
+
+    const menuSystem = {
+      enabled: false,
+      activeIndex: 0,
+      visuals: [],
+      lastTime: performance.now(),
+      lastPointerX: null,
+      moveAccumulator: 0,
+      moveThreshold: 70,
+      transitionLock: false,
+      transitionUnlockAt: 0,
+
+      init(){
+        this.visuals = feeds.map((feed, i) => new RingVisual(feed, i));
+        this.rebuildTargets(true);
+        this.loop = this.loop.bind(this);
+        requestAnimationFrame(this.loop);
+
+        stage.addEventListener("mousemove", this.onMouseMove.bind(this), { passive: true });
+        stage.addEventListener("mouseleave", this.onMouseLeave.bind(this), { passive: true });
+
+        stage.addEventListener("touchstart", (e) => {
+          if(e.touches[0]){
+            this.lastPointerX = e.touches[0].clientX;
+          }
+        }, { passive: true });
+
+        stage.addEventListener("touchmove", (e) => {
+          if(e.touches[0]){
+            this.handlePointerDelta(e.touches[0].clientX);
+          }
+        }, { passive: true });
+      },
+
+      activateCurrentFeed(){
+        playFeed(this.activeIndex);
+      },
+
+      onMouseLeave(){
+        this.lastPointerX = null;
+        this.moveAccumulator = 0;
+      },
+
+      onMouseMove(e){
+        this.handlePointerDelta(e.clientX);
+      },
+
+      handlePointerDelta(x){
+        if(!this.enabled) return;
+
+        const now = performance.now();
+        if(this.transitionLock && now < this.transitionUnlockAt) return;
+
+        if(this.lastPointerX == null){
+          this.lastPointerX = x;
+          return;
+        }
+
+        const dx = x - this.lastPointerX;
+        this.lastPointerX = x;
+
+        if(Math.abs(dx) < 0.5) return;
+
+        this.moveAccumulator += dx;
+
+        if(this.moveAccumulator >= this.moveThreshold){
+          this.moveAccumulator = 0;
+          this.shiftRight();
+        }else if(this.moveAccumulator <= -this.moveThreshold){
+          this.moveAccumulator = 0;
+          this.shiftLeft();
+        }
+      },
+
+      shiftRight(){
+        this.activeIndex = mod(this.activeIndex - 1, feeds.length);
+        this.lockTransition();
+        this.rebuildTargets(false);
+        this.activateCurrentFeed();
+      },
+
+      shiftLeft(){
+        this.activeIndex = mod(this.activeIndex + 1, feeds.length);
+        this.lockTransition();
+        this.rebuildTargets(false);
+        this.activateCurrentFeed();
+      },
+
+      lockTransition(){
+        this.transitionLock = true;
+        this.transitionUnlockAt = performance.now() + 430;
+        setTimeout(() => {
+          this.transitionLock = false;
+        }, 430);
+      },
+
+      rebuildTargets(initialSnap = false){
+        const active = this.activeIndex;
+        const outer = mod(active - 1, feeds.length);
+        const inner = mod(active + 1, feeds.length);
+
+        this.visuals.forEach((visual, i) => {
+          if(i === outer){
+            visual.setTargetFromSlot(SLOT_OUTER);
+          }else if(i === active){
+            visual.setTargetFromSlot(SLOT_ACTIVE);
+          }else if(i === inner){
+            visual.setTargetFromSlot(SLOT_INNER);
+          }else{
+            visual.hide();
+          }
+
+          if(initialSnap){
+            visual.snapToTarget();
+          }
+        });
+      },
+
+      loop(now){
+        const dt = Math.min(2.0, (now - this.lastTime) / 16.6667);
+        this.lastTime = now;
+
+        this.visuals.forEach(v => v.update(dt));
+        requestAnimationFrame(this.loop);
+      }
+    };
+
+    menuSystem.init();
+  </script>
+</body>
+</html>
