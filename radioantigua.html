@@ -8,27 +8,18 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;400;900&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --bg: #ffffff;
-
-      /* centro exacto del viewport */
       --dial-center-x: 50%;
       --dial-center-y: 50%;
-
-      /* bloque 150% más grande que la versión anterior */
       --dial-size: 71.55%;
-
       --ring-color: #c92cff;
-
       --opacity-active: 1;
       --opacity-inactive: 0.30;
-
       --slot-transition: 560ms cubic-bezier(.22, .78, .18, 1);
-
       --bounce-down: 0.985;
       --bounce-up: 1.01;
     }
@@ -104,15 +95,17 @@
       user-select: none;
       -webkit-user-drag: none;
       display: block;
+      z-index: 5;
     }
 
     .dial-overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 220ms ease;
-    }
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  z-index: 1;
+}
 
     .dial-overlay.visible {
       opacity: 1;
@@ -163,7 +156,7 @@
 
     .ring-text {
       fill: var(--ring-color);
-      font-family: "Inter", Arial, Helvetica, sans-serif;
+      font-family: "Inter";
       font-weight: 100;
       text-transform: uppercase;
       user-select: none;
@@ -316,16 +309,13 @@
       return a + (b - a) * t;
     }
 
-    function estimateRepeatCount(title, radius, fontSize, letterSpacing) {
-      const circumference = 2 * Math.PI * radius;
-      const approxCharWidth = (fontSize * 0.61) + letterSpacing;
-      const titleLen = title.length * approxCharWidth;
-      return Math.max(8, Math.ceil(circumference / titleLen) + 4);
-    }
-
-    function buildLoopString(title, radius, fontSize, letterSpacing) {
-      const reps = estimateRepeatCount(title, radius, fontSize, letterSpacing);
-      return Array.from({ length: reps }, () => title).join("   ");
+    function buildLoopString(title, radius, fontSize, letterSpacing, weight = 100, isActive = false) {
+      if (isActive) {
+        const sidePad = "    ";
+        const middlePad = "     ";
+        return `${sidePad}${title}${middlePad}${title}${sidePad}`;
+      }
+      return title;
     }
 
     function circlePathD(cx, cy, r) {
@@ -467,19 +457,23 @@
         this.text.setAttribute("font-size", this.displayFontSize.toFixed(2));
         this.text.setAttribute("letter-spacing", this.displayLetterSpacing.toFixed(2));
 
-        if (this.targetSlot && this.targetSlot.name === "active") {
-          this.text.setAttribute("font-family", "Inter, Arial, Helvetica, sans-serif");
-          this.text.setAttribute("font-weight", "900");
+        const isActive = this.targetSlot && this.targetSlot.name === "active";
+
+        if (isActive) {
+          this.text.style.fontFamily = "Inter";
+          this.text.style.fontWeight = "900";
         } else {
-          this.text.setAttribute("font-family", "Inter, Arial, Helvetica, sans-serif");
-          this.text.setAttribute("font-weight", "100");
+          this.text.style.fontFamily = "Inter";
+          this.text.style.fontWeight = "100";
         }
 
         const loopText = buildLoopString(
           this.feed.title,
           this.displayRadius,
           this.displayFontSize,
-          this.displayLetterSpacing
+          this.displayLetterSpacing,
+          isActive ? 900 : 100,
+          isActive
         );
         this.textPath.textContent = loopText;
 

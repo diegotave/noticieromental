@@ -1,643 +1,328 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Radio Antigua</title>
+const stage = document.getElementById("stage");
+const leftSpines = document.getElementById("leftSpines");
+const rightSpines = document.getElementById("rightSpines");
 
-  <style>
-    :root{
-      --bg: #ffffff;
-      --dial-center-x: 50%;
-      --dial-center-y: 50%;
-      --dial-size: 71.55%;
-      --ring-color: #c92cff;
-      --opacity-active: 1;
-      --opacity-inactive: 0.30;
-      --slot-transition: 560ms cubic-bezier(.22,.78,.18,1);
-      --bounce-down: 0.985;
-      --bounce-up: 1.01;
+const frontCoverA = document.getElementById("frontCoverA");
+const frontCoverB = document.getElementById("frontCoverB");
+
+const albumMeta = document.getElementById("albumMeta");
+const metaArtistCurrent = document.getElementById("metaArtistCurrent");
+const metaTitleCurrent = document.getElementById("metaTitleCurrent");
+const metaArtistNext = document.getElementById("metaArtistNext");
+const metaTitleNext = document.getElementById("metaTitleNext");
+
+const albums = [
+  {
+    artist: "Howe Gelb",
+    title: "disc_name",
+    cover: "CDS/Howe_Gelb-disc_name/Front.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+  },
+  {
+    artist: "The Clash",
+    title: "London Calling",
+    cover: "CDS/TheClash_London calling/cover.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+  },
+  {
+    artist: "Cindy Lauper",
+    title: "She",
+    cover: "CDS/Cindy Lauper - She/covercindy.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+  },
+  {
+    artist: "Lady Gaga",
+    title: "disc_name",
+    cover: "CDS/Lady_gaga-disc_name/cover1.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+  },
+  {
+    artist: "Nirvana",
+    title: "Nevermind",
+    cover: "CDS/Nirvana-nevermind/covernirvana.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+  }
+];
+
+if (!albums.length) {
+  throw new Error("No hay albums cargados en phonavi.js");
+}
+
+let currentIndex = 0;
+let currentFront = "A";
+let isAnimating = false;
+
+let dragStartX = 0;
+let dragCurrentX = 0;
+let dragDeltaX = 0;
+let isDragging = false;
+let dragLocked = false;
+let activePointerId = null;
+
+const DRAG_THRESHOLD = 90;
+const MAX_ELASTIC_PX = 120;
+const SPINES_PER_SIDE = 6;
+
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getAlbum(index) {
+  return albums[mod(index, albums.length)];
+}
+
+function setMetaInstant(album) {
+  metaArtistCurrent.textContent = album.artist || "";
+  metaTitleCurrent.textContent = album.title || "";
+  metaArtistNext.textContent = "";
+  metaTitleNext.textContent = "";
+  albumMeta.classList.remove("switching");
+}
+
+function switchMeta(album) {
+  metaArtistNext.textContent = album.artist || "";
+  metaTitleNext.textContent = album.title || "";
+
+  albumMeta.classList.remove("switching");
+  void albumMeta.offsetWidth;
+  albumMeta.classList.add("switching");
+
+  window.setTimeout(() => {
+    metaArtistCurrent.textContent = album.artist || "";
+    metaTitleCurrent.textContent = album.title || "";
+    albumMeta.classList.remove("switching");
+  }, 190);
+}
+
+function setFrontCoverInstant(album) {
+  frontCoverA.src = album.cover;
+  frontCoverB.src = album.cover;
+  frontCoverA.style.transform = "translateX(0)";
+  frontCoverB.style.transform = "translateX(100%)";
+  currentFront = "A";
+}
+
+function animateFrontCover(nextAlbum, direction) {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  const visible = currentFront === "A" ? frontCoverA : frontCoverB;
+  const hidden = currentFront === "A" ? frontCoverB : frontCoverA;
+
+  hidden.src = nextAlbum.cover;
+
+  const fromX = direction > 0 ? "100%" : "-100%";
+  const toX = direction > 0 ? "-100%" : "100%";
+
+  visible.style.transition = "none";
+  hidden.style.transition = "none";
+
+  visible.style.transform = "translateX(0)";
+  hidden.style.transform = `translateX(${fromX})`;
+
+  void hidden.offsetWidth;
+
+  const easing = "420ms cubic-bezier(0.22,1,0.36,1)";
+  visible.style.transition = `transform ${easing}`;
+  hidden.style.transition = `transform ${easing}`;
+
+  visible.style.transform = `translateX(${toX})`;
+  hidden.style.transform = "translateX(0)";
+
+  window.setTimeout(() => {
+    visible.style.transition = "none";
+    hidden.style.transition = "none";
+    visible.style.transform = direction > 0 ? "translateX(100%)" : "translateX(-100%)";
+    hidden.style.transform = "translateX(0)";
+    currentFront = currentFront === "A" ? "B" : "A";
+    isAnimating = false;
+  }, 430);
+}
+
+function makeSpine(album, side, distanceFromCenter) {
+  const wrap = document.createElement("div");
+  wrap.className = "spine-wrap";
+
+  const cover = document.createElement("img");
+  cover.className = "spine-cover";
+  cover.src = album.cover;
+  cover.alt = "";
+
+  const spinePng = document.createElement("img");
+  spinePng.className = "spinepng";
+  spinePng.src = album.spine;
+  spinePng.alt = "";
+
+  if (distanceFromCenter === 0) {
+    wrap.classList.add("op100");
+    wrap.classList.add("sat80");
+  } else if (distanceFromCenter === 1) {
+    wrap.classList.add("op80");
+    wrap.classList.add("sat60");
+  } else {
+    wrap.classList.add("op60");
+    wrap.classList.add("sat40");
+  }
+
+  const shiftBase = distanceFromCenter * 2;
+  wrap.style.setProperty(
+    "--spine-shift",
+    `${side === "left" ? shiftBase : -shiftBase}px`
+  );
+
+  wrap.appendChild(cover);
+  wrap.appendChild(spinePng);
+
+  return wrap;
+}
+
+function renderSpines() {
+  leftSpines.innerHTML = "";
+  rightSpines.innerHTML = "";
+
+  for (let i = SPINES_PER_SIDE; i >= 1; i--) {
+    const album = getAlbum(currentIndex - i);
+    const distanceFromCenter = SPINES_PER_SIDE - i;
+    leftSpines.appendChild(makeSpine(album, "left", distanceFromCenter));
+  }
+
+  for (let i = 1; i <= SPINES_PER_SIDE; i++) {
+    const album = getAlbum(currentIndex + i);
+    const distanceFromCenter = i - 1;
+    rightSpines.appendChild(makeSpine(album, "right", distanceFromCenter));
+  }
+}
+
+function setElasticFromDrag(deltaX) {
+  const abs = Math.abs(deltaX);
+  const elastic = clamp(abs / MAX_ELASTIC_PX, 0, 1);
+  stage.style.setProperty("--elastic", elastic.toFixed(3));
+
+  const moveX = clamp(deltaX * 0.18, -42, 42);
+  stage.style.transform = `translateX(${moveX}px)`;
+}
+
+function clearElastic() {
+  stage.style.setProperty("--elastic", "0");
+  stage.style.transition = "transform 340ms cubic-bezier(0.22,1,0.36,1)";
+  stage.style.transform = "translateX(0)";
+  window.setTimeout(() => {
+    stage.style.transition = "";
+  }, 360);
+}
+
+function goToIndex(nextIndex, direction) {
+  currentIndex = mod(nextIndex, albums.length);
+  const album = getAlbum(currentIndex);
+  animateFrontCover(album, direction);
+  switchMeta(album);
+  renderSpines();
+}
+
+function handleRelease() {
+  stage.classList.remove("dragging");
+
+  const delta = dragDeltaX;
+
+  if (Math.abs(delta) >= DRAG_THRESHOLD) {
+    if (delta < 0) {
+      goToIndex(currentIndex + 1, 1);
+    } else {
+      goToIndex(currentIndex - 1, -1);
     }
+  }
 
-    html,body{
-      margin:0;
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      background:var(--bg);
-      font-family: Arial, Helvetica, sans-serif;
+  clearElastic();
+
+  isDragging = false;
+  dragLocked = false;
+  dragDeltaX = 0;
+  activePointerId = null;
+}
+
+function onPointerDown(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  activePointerId = e.pointerId;
+  isDragging = true;
+  dragLocked = false;
+  dragStartX = e.clientX;
+  dragCurrentX = e.clientX;
+  dragDeltaX = 0;
+
+  stage.classList.add("dragging");
+  stage.style.transition = "none";
+
+  if (stage.setPointerCapture) {
+    stage.setPointerCapture(e.pointerId);
+  }
+}
+
+function onPointerMove(e) {
+  if (!isDragging) return;
+  if (activePointerId !== null && e.pointerId !== activePointerId) return;
+
+  dragCurrentX = e.clientX;
+  dragDeltaX = dragCurrentX - dragStartX;
+
+  if (!dragLocked && Math.abs(dragDeltaX) > 6) {
+    dragLocked = true;
+  }
+
+  setElasticFromDrag(dragDeltaX);
+}
+
+function onPointerUp(e) {
+  if (!isDragging) return;
+  if (activePointerId !== null && e.pointerId !== activePointerId) return;
+  handleRelease();
+}
+
+function onPointerCancel(e) {
+  if (!isDragging) return;
+  if (activePointerId !== null && e.pointerId !== activePointerId) return;
+  handleRelease();
+}
+
+function onKeyDown(e) {
+  if (isAnimating) return;
+
+  if (e.key === "ArrowRight") {
+    goToIndex(currentIndex + 1, 1);
+  } else if (e.key === "ArrowLeft") {
+    goToIndex(currentIndex - 1, -1);
+  }
+}
+
+function preloadImages() {
+  albums.forEach((album) => {
+    const img = new Image();
+    img.src = album.cover;
+
+    if (album.spine) {
+      const spine = new Image();
+      spine.src = album.spine;
     }
-
-    body{
-      background:#fff;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-
-    .stage{
-      position:relative;
-      width:100vw;
-      height:100dvh;
-      overflow:hidden;
-      background:#fff;
-    }
-
-    .radio-button{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      border:none;
-      background:transparent;
-      padding:0;
-      margin:0;
-      cursor:pointer;
-      display:block;
-      transform-origin:center center;
-    }
-
-    .radio-button.bounce{
-      animation: press 220ms ease;
-    }
-
-    @keyframes press{
-      0%   { transform:scale(1); }
-      40%  { transform:scale(var(--bounce-down)); }
-      70%  { transform:scale(var(--bounce-up)); }
-      100% { transform:scale(1); }
-    }
-
-    .radio-image{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      object-position:center;
-      pointer-events:none;
-      user-select:none;
-      -webkit-user-drag:none;
-      display:block;
-    }
-
-    .dial-overlay{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      opacity:0;
-      transition:opacity 220ms ease;
-    }
-
-    .dial-overlay.visible{
-      opacity:1;
-    }
-
-    .dial-area{
-      position:absolute;
-      left:calc(var(--dial-center-x) - var(--dial-size) / 2);
-      top:calc(var(--dial-center-y) - var(--dial-size) / 2);
-      width:var(--dial-size);
-      height:var(--dial-size);
-      pointer-events:none;
-      overflow:visible;
-    }
-
-    .menu-layer{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      overflow:visible;
-    }
-
-    .ring-item{
-      position:absolute;
-      left:50%;
-      top:50%;
-      width:100%;
-      height:100%;
-      transform-origin:center center;
-      transition:
-        transform var(--slot-transition),
-        opacity var(--slot-transition),
-        filter var(--slot-transition);
-      will-change: transform, opacity;
-      pointer-events:none;
-    }
-
-    .ring-item.hidden{
-      opacity:0;
-    }
-
-    .ring-svg{
-      width:100%;
-      height:100%;
-      overflow:visible;
-      display:block;
-    }
-
-    .ring-text{
-      fill:var(--ring-color);
-      font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight:100;
-      text-transform:uppercase;
-      user-select:none;
-      pointer-events:none;
-      dominant-baseline:middle;
-      text-rendering:geometricPrecision;
-    }
-
-    @media (max-aspect-ratio: 3/4){
-      :root{
-        --dial-center-x: 50%;
-        --dial-center-y: 50%;
-        --dial-size: 93%;
-      }
-
-      .radio-image{
-        object-fit:cover;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="stage" id="stage">
-    <button class="radio-button" id="radioBtn" aria-label="Activar radio antigua">
-      <img
-        id="radioImg"
-        class="radio-image"
-        src="assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png"
-        alt="Radio antigua"
-      />
-    </button>
-
-    <div class="dial-overlay" id="dialOverlay" aria-hidden="true">
-      <div class="dial-area" id="dialArea">
-        <div class="menu-layer" id="menuLayer"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const BASE_PATH = "assets/IMAGES/radioantigua/radioantigua_armado";
-    const PREFIX = "radioantigua_";
-    const EXT = ".png";
-    const FIRST = 0;
-    const LAST = 28;
-    const FRAME_TIME = 50;
-
-    const radioBtn = document.getElementById("radioBtn");
-    const radioImg = document.getElementById("radioImg");
-    const dialOverlay = document.getElementById("dialOverlay");
-    const menuLayer = document.getElementById("menuLayer");
-    const stage = document.getElementById("stage");
-
-    let playing = false;
-    let currentFrame = FIRST;
-    let radioOpened = false;
-    let hasUserGesture = false;
-
-    function framePath(n){
-      const num = String(n).padStart(2, "0");
-      return `${BASE_PATH}/${PREFIX}${num}${EXT}`;
-    }
-
-    function setFrame(n){
-      currentFrame = n;
-      radioImg.src = framePath(n);
-    }
-
-    async function playRadioSequence(){
-      if(playing || radioOpened) return;
-
-      playing = true;
-      hasUserGesture = true;
-
-      radioBtn.classList.remove("bounce");
-      void radioBtn.offsetWidth;
-      radioBtn.classList.add("bounce");
-
-      for(let i = currentFrame + 1; i <= LAST; i++){
-        setFrame(i);
-        await new Promise(r => setTimeout(r, FRAME_TIME));
-      }
-
-      setFrame(LAST);
-      playing = false;
-      radioOpened = true;
-
-      menuSystem.enabled = true;
-      dialOverlay.classList.add("visible");
-      dialOverlay.setAttribute("aria-hidden", "false");
-      menuSystem.activateCurrentFeed();
-    }
-
-    radioBtn.addEventListener("click", playRadioSequence);
-    setFrame(FIRST);
-
-    const feeds = [
-      {
-        id: "techno",
-        title: "FEED TECHNO",
-        streamUrl: "",
-        spinSpeed: 0.0105
-      },
-      {
-        id: "peces",
-        title: "FEED PECES",
-        streamUrl: "",
-        spinSpeed: -0.0088
-      },
-      {
-        id: "lava",
-        title: "FEED LAVA",
-        streamUrl: "",
-        spinSpeed: 0.0078
-      },
-      {
-        id: "selva",
-        title: "FEED SELVA",
-        streamUrl: "",
-        spinSpeed: -0.0094
-      },
-      {
-        id: "cemento",
-        title: "FEED CEMENTO",
-        streamUrl: "",
-        spinSpeed: 0.0084
-      }
-    ];
-
-    const feedAudio = new Audio();
-    feedAudio.crossOrigin = "anonymous";
-    feedAudio.preload = "none";
-    feedAudio.loop = false;
-
-    function playFeed(index){
-      const feed = feeds[mod(index, feeds.length)];
-      if(!feed || !feed.streamUrl) return;
-      if(!hasUserGesture) return;
-
-      if(feedAudio.src !== feed.streamUrl){
-        feedAudio.src = feed.streamUrl;
-      }
-
-      feedAudio.play().catch(() => {});
-    }
-
-    function mod(n, m){
-      return ((n % m) + m) % m;
-    }
-
-    function lerp(a, b, t){
-      return a + (b - a) * t;
-    }
-
-    function measureTextExact(textValue, fontSize, letterSpacing, isActive){
-      const svgNS = "http://www.w3.org/2000/svg";
-
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.style.position = "absolute";
-      svg.style.visibility = "hidden";
-      svg.style.pointerEvents = "none";
-      svg.style.left = "-99999px";
-      svg.style.top = "-99999px";
-
-      const text = document.createElementNS(svgNS, "text");
-      text.textContent = textValue;
-      text.setAttribute("font-size", String(fontSize));
-      text.setAttribute("letter-spacing", String(letterSpacing));
-      text.setAttribute("font-family", '"Helvetica Neue", Helvetica, Arial, sans-serif');
-      text.setAttribute("font-weight", isActive ? "700" : "100");
-
-      svg.appendChild(text);
-      document.body.appendChild(svg);
-
-      const length = text.getComputedTextLength();
-
-      document.body.removeChild(svg);
-      return length;
-    }
-
-    function buildLoopString(title, radius, fontSize, letterSpacing, isActive = false){
-      const circumference = 2 * Math.PI * radius;
-      const safeLength = circumference - 12;
-      const gap = "        ";
-
-      let count = 1;
-      let best = title;
-
-      while(true){
-        const candidate = Array(count).fill(title).join(gap);
-        const length = measureTextExact(candidate, fontSize, letterSpacing, isActive);
-
-        if(length <= safeLength){
-          best = candidate;
-          count++;
-        }else{
-          break;
-        }
-
-        if(count > 40){
-          break;
-        }
-      }
-
-      return best;
-    }
-
-    function circlePathD(cx, cy, r){
-      return [
-        `M ${cx - r}, ${cy}`,
-        `a ${r},${r} 0 1,1 ${r * 2},0`,
-        `a ${r},${r} 0 1,1 -${r * 2},0`
-      ].join(" ");
-    }
-
-    const SLOT_OUTER = {
-      name: "outer",
-      x: 0,
-      y: 0,
-      scale: 1.16,
-      opacity: 0.30,
-      radius: 360,
-      fontSize: 92,
-      letterSpacing: 5.4
-    };
-
-    const SLOT_ACTIVE = {
-      name: "active",
-      x: 0,
-      y: 0,
-      scale: 1.00,
-      opacity: 1.00,
-      radius: 333.3,
-      fontSize: 88.4,
-      letterSpacing: 6.2
-    };
-
-    const SLOT_INNER = {
-      name: "inner",
-      x: 0,
-      y: 0,
-      scale: 0.78,
-      opacity: 0.30,
-      radius: 306.6,
-      fontSize: 124.8,
-      letterSpacing: 3.2
-    };
-
-    class RingVisual {
-      constructor(feed, feedIndex){
-        this.feed = feed;
-        this.feedIndex = feedIndex;
-
-        this.spinAngle = 0;
-        this.targetSlot = null;
-
-        this.displayX = 0;
-        this.displayY = 0;
-        this.displayScale = 1;
-        this.displayOpacity = 0;
-        this.displayRadius = 250;
-        this.displayFontSize = 24;
-        this.displayLetterSpacing = 2;
-
-        this.targetX = 0;
-        this.targetY = 0;
-        this.targetScale = 1;
-        this.targetOpacity = 0;
-        this.targetRadius = 250;
-        this.targetFontSize = 24;
-        this.targetLetterSpacing = 2;
-
-        this.el = document.createElement("div");
-        this.el.className = "ring-item hidden";
-
-        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this.svg.setAttribute("class", "ring-svg");
-        this.svg.setAttribute("viewBox", "0 0 1000 1000");
-        this.svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-
-        this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        this.pathId = `ringPath_${feed.id}_${feedIndex}`;
-        this.path.setAttribute("id", this.pathId);
-        this.path.setAttribute("fill", "none");
-
-        this.text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        this.text.setAttribute("class", "ring-text");
-
-        this.textPath = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-        this.textPath.setAttributeNS("http://www.w3.org/1999/xlink", "href", `#${this.pathId}`);
-        this.textPath.setAttribute("startOffset", "0%");
-
-        this.text.appendChild(this.textPath);
-        this.svg.appendChild(this.path);
-        this.svg.appendChild(this.text);
-        this.el.appendChild(this.svg);
-        menuLayer.appendChild(this.el);
-      }
-
-      setTargetFromSlot(slot){
-        this.targetSlot = slot;
-        this.targetX = slot.x;
-        this.targetY = slot.y;
-        this.targetScale = slot.scale;
-        this.targetOpacity = slot.opacity;
-        this.targetRadius = slot.radius;
-        this.targetFontSize = slot.fontSize;
-        this.targetLetterSpacing = slot.letterSpacing;
-      }
-
-      hide(){
-        this.targetSlot = null;
-        this.targetOpacity = 0;
-      }
-
-      snapToTarget(){
-        this.displayX = this.targetX;
-        this.displayY = this.targetY;
-        this.displayScale = this.targetScale;
-        this.displayOpacity = this.targetOpacity;
-        this.displayRadius = this.targetRadius;
-        this.displayFontSize = this.targetFontSize;
-        this.displayLetterSpacing = this.targetLetterSpacing;
-      }
-
-      update(dt){
-        this.spinAngle += this.feed.spinSpeed * dt;
-
-        this.displayX = lerp(this.displayX, this.targetX, 0.12);
-        this.displayY = lerp(this.displayY, this.targetY, 0.12);
-        this.displayScale = lerp(this.displayScale, this.targetScale, 0.12);
-        this.displayOpacity = lerp(this.displayOpacity, this.targetOpacity, 0.12);
-        this.displayRadius = lerp(this.displayRadius, this.targetRadius, 0.12);
-        this.displayFontSize = lerp(this.displayFontSize, this.targetFontSize, 0.12);
-        this.displayLetterSpacing = lerp(this.displayLetterSpacing, this.targetLetterSpacing, 0.12);
-
-        const visible = this.displayOpacity > 0.01;
-        this.el.classList.toggle("hidden", !visible);
-
-        const cx = 500;
-        const cy = 500;
-        this.path.setAttribute("d", circlePathD(cx, cy, this.displayRadius));
-
-        this.text.setAttribute("font-size", this.displayFontSize.toFixed(2));
-        this.text.setAttribute("letter-spacing", this.displayLetterSpacing.toFixed(2));
-
-        const isActive = this.targetSlot && this.targetSlot.name === "active";
-
-        this.text.setAttribute("font-family", '"Helvetica Neue", Helvetica, Arial, sans-serif');
-        this.text.setAttribute("font-weight", isActive ? "700" : "100");
-
-        const loopText = buildLoopString(
-          this.feed.title,
-          this.displayRadius,
-          this.displayFontSize,
-          this.displayLetterSpacing,
-          isActive
-        );
-        this.textPath.textContent = loopText;
-
-        this.el.style.opacity = this.displayOpacity.toFixed(4);
-
-        const rotDeg = this.spinAngle * 180 / Math.PI;
-        this.el.style.transform = `
-          translate(-50%, -50%)
-          translate(${this.displayX}px, ${this.displayY}px)
-          scale(${this.displayScale})
-          rotate(${rotDeg}deg)
-        `;
-      }
-    }
-
-    const menuSystem = {
-      enabled: false,
-      activeIndex: 0,
-      visuals: [],
-      lastTime: performance.now(),
-      lastPointerX: null,
-      moveAccumulator: 0,
-      moveThreshold: 70,
-      transitionLock: false,
-      transitionUnlockAt: 0,
-
-      init(){
-        this.visuals = feeds.map((feed, i) => new RingVisual(feed, i));
-        this.rebuildTargets(true);
-        this.loop = this.loop.bind(this);
-        requestAnimationFrame(this.loop);
-
-        stage.addEventListener("mousemove", this.onMouseMove.bind(this), { passive: true });
-        stage.addEventListener("mouseleave", this.onMouseLeave.bind(this), { passive: true });
-
-        stage.addEventListener("touchstart", (e) => {
-          if(e.touches[0]){
-            this.lastPointerX = e.touches[0].clientX;
-          }
-        }, { passive: true });
-
-        stage.addEventListener("touchmove", (e) => {
-          if(e.touches[0]){
-            this.handlePointerDelta(e.touches[0].clientX);
-          }
-        }, { passive: true });
-      },
-
-      activateCurrentFeed(){
-        playFeed(this.activeIndex);
-      },
-
-      onMouseLeave(){
-        this.lastPointerX = null;
-        this.moveAccumulator = 0;
-      },
-
-      onMouseMove(e){
-        this.handlePointerDelta(e.clientX);
-      },
-
-      handlePointerDelta(x){
-        if(!this.enabled) return;
-
-        const now = performance.now();
-        if(this.transitionLock && now < this.transitionUnlockAt) return;
-
-        if(this.lastPointerX == null){
-          this.lastPointerX = x;
-          return;
-        }
-
-        const dx = x - this.lastPointerX;
-        this.lastPointerX = x;
-
-        if(Math.abs(dx) < 0.5) return;
-
-        this.moveAccumulator += dx;
-
-        if(this.moveAccumulator >= this.moveThreshold){
-          this.moveAccumulator = 0;
-          this.shiftRight();
-        }else if(this.moveAccumulator <= -this.moveThreshold){
-          this.moveAccumulator = 0;
-          this.shiftLeft();
-        }
-      },
-
-      shiftRight(){
-        this.activeIndex = mod(this.activeIndex - 1, feeds.length);
-        this.lockTransition();
-        this.rebuildTargets(false);
-        this.activateCurrentFeed();
-      },
-
-      shiftLeft(){
-        this.activeIndex = mod(this.activeIndex + 1, feeds.length);
-        this.lockTransition();
-        this.rebuildTargets(false);
-        this.activateCurrentFeed();
-      },
-
-      lockTransition(){
-        this.transitionLock = true;
-        this.transitionUnlockAt = performance.now() + 430;
-        setTimeout(() => {
-          this.transitionLock = false;
-        }, 430);
-      },
-
-      rebuildTargets(initialSnap = false){
-        const active = this.activeIndex;
-        const outer = mod(active - 1, feeds.length);
-        const inner = mod(active + 1, feeds.length);
-
-        this.visuals.forEach((visual, i) => {
-          if(i === outer){
-            visual.setTargetFromSlot(SLOT_OUTER);
-          }else if(i === active){
-            visual.setTargetFromSlot(SLOT_ACTIVE);
-          }else if(i === inner){
-            visual.setTargetFromSlot(SLOT_INNER);
-          }else{
-            visual.hide();
-          }
-
-          if(initialSnap){
-            visual.snapToTarget();
-          }
-        });
-      },
-
-      loop(now){
-        const dt = Math.min(2.0, (now - this.lastTime) / 16.6667);
-        this.lastTime = now;
-
-        this.visuals.forEach(v => v.update(dt));
-        requestAnimationFrame(this.loop);
-      }
-    };
-
-    menuSystem.init();
-  </script>
-</body>
-</html>
+  });
+}
+
+function init() {
+  preloadImages();
+
+  const first = getAlbum(currentIndex);
+  setFrontCoverInstant(first);
+  setMetaInstant(first);
+  renderSpines();
+
+  stage.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("pointermove", onPointerMove, { passive: true });
+  window.addEventListener("pointerup", onPointerUp);
+  window.addEventListener("pointercancel", onPointerCancel);
+  window.addEventListener("keydown", onKeyDown);
+}
+
+init();
