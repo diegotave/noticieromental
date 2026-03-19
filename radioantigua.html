@@ -46,6 +46,50 @@
       background: #fff;
     }
 
+    /* VIDEO DE FEED: DETRAS DEL ANILLO Y DETRAS DEL VIDEO DE RADIO */
+    .feed-video-backdrop {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 4;
+      pointer-events: none;
+      background: transparent;
+      opacity: 0;
+      transition: opacity 600ms ease;
+    }
+
+    .feed-video-mask-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-position: 0 0;
+      -webkit-mask-size: auto;
+      mask-repeat: no-repeat;
+      mask-position: 0 0;
+      mask-size: auto;
+    }
+
+    .feed-video-window {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .feed-video-window iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      pointer-events: none;
+    }
+
     .radio-button {
       position: absolute;
       inset: 0;
@@ -58,6 +102,7 @@
       cursor: pointer;
       display: block;
       transform-origin: center center;
+      z-index: 7;
     }
 
     .radio-button.bounce {
@@ -93,7 +138,7 @@
       user-select: none;
       -webkit-user-drag: none;
       display: block;
-      z-index: 5;
+      z-index: 7;
     }
 
     .dial-overlay {
@@ -102,7 +147,7 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 220ms ease;
-      z-index: 1;
+      z-index: 6;
     }
 
     .dial-overlay.visible {
@@ -197,6 +242,22 @@
 <body>
 
   <div class="stage" id="stage">
+
+    <div class="feed-video-backdrop" id="feedVideoBackdrop" aria-hidden="true">
+      <div class="feed-video-mask-layer" id="feedVideoMaskLayer">
+        <div class="feed-video-window" id="feedVideoWindow">
+          <iframe
+            id="youtubeFeed"
+            src=""
+            title="Feed de fondo"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </div>
+
     <button class="radio-button" id="radioBtn" aria-label="Activar radio antigua">
       <video id="radioVideo" class="radio-video" src="assets/VIDEOS/radioantigua/radioantigua_open.webm"
         poster="assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png" preload="auto" playsinline
@@ -217,6 +278,7 @@
   <script>
     const RADIO_VIDEO_PATH = "assets/VIDEOS/radioantigua/radioantigua_open.webm";
     const RADIO_POSTER_PATH = "assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png";
+    const VIDEO_SHAPE_PNG_PATH = "assets/IMAGES/formavideo.png";
     const SEGMENT_GAP_DEG = 10;
 
     const radioBtn = document.getElementById("radioBtn");
@@ -225,14 +287,258 @@
     const menuLayer = document.getElementById("menuLayer");
     const stage = document.getElementById("stage");
     const measureTextEl = document.getElementById("measureText");
+    const youtubeFeed = document.getElementById("youtubeFeed");
+    const feedVideoBackdrop = document.getElementById("feedVideoBackdrop");
+    const feedVideoMaskLayer = document.getElementById("feedVideoMaskLayer");
+    const feedVideoWindow = document.getElementById("feedVideoWindow");
 
     let playing = false;
     let radioOpened = false;
     let hasUserGesture = false;
+    let currentFeedVideoUrl = "";
+    let inverseMaskDataUrl = "";
+
+    let videoShapeImage = null;
+    let videoShapeBounds = null;
 
     radioVideo.src = RADIO_VIDEO_PATH;
     radioVideo.poster = RADIO_POSTER_PATH;
     radioVideo.currentTime = 0;
+
+    const feeds = [
+      {
+        id: "techno",
+        title: "FEED TECHNO",
+        youtube: "https://www.youtube.com/watch?v=vcMgY0qn644",
+        spinSpeed: 0.0105
+      },
+      {
+        id: "peces",
+        title: "FEED PECES",
+        youtube: "https://www.youtube.com/watch?v=DHUnz4dyb54",
+        spinSpeed: -0.0088
+      },
+      {
+        id: "lava",
+        title: "FEED LAVA",
+        youtube: "https://www.youtube.com/watch?v=zbo6jUGrwdk",
+        spinSpeed: 0.0078
+      },
+      {
+        id: "selva",
+        title: "FEED SELVA",
+        youtube: "",
+        spinSpeed: -0.0094
+      },
+      {
+        id: "cemento",
+        title: "FEED CEMENTO",
+        youtube: "",
+        spinSpeed: 0.0084
+      }
+    ];
+
+    function extractYouTubeId(input) {
+      if (!input) return "";
+      const value = String(input).trim();
+
+      if (/^[a-zA-Z0-9_-]{11}$/.test(value)) {
+        return value;
+      }
+
+      try {
+        const url = new URL(value);
+
+        if (url.hostname.includes("youtu.be")) {
+          return url.pathname.replace(/\//g, "").slice(0, 11);
+        }
+
+        if (url.searchParams.get("v")) {
+          return url.searchParams.get("v").slice(0, 11);
+        }
+
+        const parts = url.pathname.split("/").filter(Boolean);
+        const embedIndex = parts.indexOf("embed");
+        if (embedIndex !== -1 && parts[embedIndex + 1]) {
+          return parts[embedIndex + 1].slice(0, 11);
+        }
+
+        const shortsIndex = parts.indexOf("shorts");
+        if (shortsIndex !== -1 && parts[shortsIndex + 1]) {
+          return parts[shortsIndex + 1].slice(0, 11);
+        }
+      } catch (e) { }
+
+      return "";
+    }
+
+    function buildYouTubeEmbedUrl(source) {
+      const videoId = extractYouTubeId(source);
+      if (!videoId) return "";
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+    }
+
+    function getCoverRect(containerW, containerH, sourceW, sourceH) {
+      const scale = Math.max(containerW / sourceW, containerH / sourceH);
+      const width = sourceW * scale;
+      const height = sourceH * scale;
+      const left = (containerW - width) / 2;
+      const top = (containerH - height) / 2;
+
+      return { left, top, width, height, scale };
+    }
+
+    function getTransparentBounds(img) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+      let minX = canvas.width;
+      let minY = canvas.height;
+      let maxX = -1;
+      let maxY = -1;
+
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const alpha = data[(y * canvas.width + x) * 4 + 3];
+
+          if (alpha < 8) {
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      if (maxX < 0 || maxY < 0) {
+        return {
+          x: 0,
+          y: 0,
+          width: canvas.width,
+          height: canvas.height
+        };
+      }
+
+      return {
+        x: minX,
+        y: minY,
+        width: maxX - minX + 1,
+        height: maxY - minY + 1
+      };
+    }
+
+    function buildInverseMaskDataUrl(img) {
+      const maskCanvas = document.createElement("canvas");
+      const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
+
+      maskCanvas.width = img.naturalWidth;
+      maskCanvas.height = img.naturalHeight;
+
+      maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      maskCtx.drawImage(img, 0, 0);
+
+      const imageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const originalAlpha = data[i + 3];
+        const inverseAlpha = 255 - originalAlpha;
+
+        data[i] = 255;
+        data[i + 1] = 255;
+        data[i + 2] = 255;
+        data[i + 3] = inverseAlpha;
+      }
+
+      maskCtx.putImageData(imageData, 0, 0);
+      return maskCanvas.toDataURL("image/png");
+    }
+
+    function loadVideoShape() {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          videoShapeImage = img;
+          videoShapeBounds = getTransparentBounds(img);
+          inverseMaskDataUrl = buildInverseMaskDataUrl(img);
+          updateVideoMaskLayout();
+          resolve();
+        };
+        img.onerror = reject;
+        img.src = VIDEO_SHAPE_PNG_PATH;
+      });
+    }
+
+    function updateVideoMaskLayout() {
+      if (!videoShapeImage || !videoShapeBounds) return;
+
+      const stageRect = stage.getBoundingClientRect();
+      const stageW = Math.max(1, stageRect.width);
+      const stageH = Math.max(1, stageRect.height);
+
+      /* formavideo acompaña al radioantigua_open:
+         mismo comportamiento tipo cover, sin deformarse */
+      const coverRect = getCoverRect(
+        stageW,
+        stageH,
+        videoShapeImage.naturalWidth,
+        videoShapeImage.naturalHeight
+      );
+
+      const holeX = coverRect.left + (videoShapeBounds.x * coverRect.scale);
+      const holeY = coverRect.top + (videoShapeBounds.y * coverRect.scale);
+      const holeW = videoShapeBounds.width * coverRect.scale;
+      const holeH = videoShapeBounds.height * coverRect.scale;
+
+      const centerX = holeX + holeW / 2;
+      const centerY = holeY + holeH / 2;
+
+      /* el feed mantiene 16:9 y la altura siempre la da el hueco */
+      const videoHeight = holeH;
+      const videoWidth = videoHeight * (16 / 9);
+
+      feedVideoWindow.style.left = `${centerX}px`;
+      feedVideoWindow.style.top = `${centerY}px`;
+      feedVideoWindow.style.width = `${videoWidth}px`;
+      feedVideoWindow.style.height = `${videoHeight}px`;
+
+      if (inverseMaskDataUrl) {
+        feedVideoMaskLayer.style.webkitMaskImage = `url("${inverseMaskDataUrl}")`;
+        feedVideoMaskLayer.style.maskImage = `url("${inverseMaskDataUrl}")`;
+
+        feedVideoMaskLayer.style.webkitMaskSize = `${coverRect.width}px ${coverRect.height}px`;
+        feedVideoMaskLayer.style.maskSize = `${coverRect.width}px ${coverRect.height}px`;
+
+        feedVideoMaskLayer.style.webkitMaskPosition = `${coverRect.left}px ${coverRect.top}px`;
+        feedVideoMaskLayer.style.maskPosition = `${coverRect.left}px ${coverRect.top}px`;
+      }
+    }
+
+    function setFeedVideo(videoUrl) {
+      const youtubeEmbedUrl = buildYouTubeEmbedUrl(videoUrl);
+
+      if (!youtubeEmbedUrl) {
+        currentFeedVideoUrl = "";
+        youtubeFeed.src = "";
+        feedVideoBackdrop.style.opacity = "0";
+        return;
+      }
+
+      if (youtubeEmbedUrl !== currentFeedVideoUrl) {
+        youtubeFeed.src = youtubeEmbedUrl;
+        currentFeedVideoUrl = youtubeEmbedUrl;
+      }
+
+      requestAnimationFrame(() => {
+        feedVideoBackdrop.style.opacity = "1";
+      });
+    }
 
     async function playRadioSequence() {
       if (playing || radioOpened) return;
@@ -262,9 +568,15 @@
     });
 
     radioVideo.addEventListener("ended", () => {
-      radioVideo.pause();
+      try {
+        radioVideo.pause();
+        radioVideo.currentTime = Math.max(0, radioVideo.duration - 0.001);
+      } catch (e) { }
+
       playing = false;
       radioOpened = true;
+
+      updateVideoMaskLayout();
 
       menuSystem.enabled = true;
       dialOverlay.classList.add("visible");
@@ -273,39 +585,7 @@
     });
 
     radioBtn.addEventListener("click", playRadioSequence);
-
-    const feeds = [
-      {
-        id: "techno",
-        title: "FEED TECHNO",
-        streamUrl: "",
-        spinSpeed: 0.0105
-      },
-      {
-        id: "peces",
-        title: "FEED PECES",
-        streamUrl: "",
-        spinSpeed: -0.0088
-      },
-      {
-        id: "lava",
-        title: "FEED LAVA",
-        streamUrl: "",
-        spinSpeed: 0.0078
-      },
-      {
-        id: "selva",
-        title: "FEED SELVA",
-        streamUrl: "",
-        spinSpeed: -0.0094
-      },
-      {
-        id: "cemento",
-        title: "FEED CEMENTO",
-        streamUrl: "",
-        spinSpeed: 0.0084
-      }
-    ];
+    window.addEventListener("resize", updateVideoMaskLayout);
 
     const feedAudio = new Audio();
     feedAudio.crossOrigin = "anonymous";
@@ -353,7 +633,6 @@
       while (delta >= 360) delta -= 360;
 
       const largeArcFlag = delta > 180 ? 1 : 0;
-
       return `M ${start.x}, ${start.y} A ${r},${r} 0 ${largeArcFlag} 1 ${end.x}, ${end.y}`;
     }
 
@@ -617,6 +896,15 @@
       },
 
       activateCurrentFeed() {
+        const feed = feeds[this.activeIndex];
+
+        if (feed && feed.youtube) {
+          updateVideoMaskLayout();
+          setFeedVideo(feed.youtube);
+        } else {
+          setFeedVideo("");
+        }
+
         playFeed(this.activeIndex);
       },
 
@@ -709,6 +997,7 @@
       }
     };
 
+    loadVideoShape().catch(() => { });
     menuSystem.init();
   </script>
 </body>
