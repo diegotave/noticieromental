@@ -13,8 +13,6 @@
   <style>
     :root {
       --bg: #ffffff;
-      --dial-center-x: 50%;
-      --dial-center-y: 50%;
       --dial-size: 71.55%;
       --ring-color: #c92cff;
       --opacity-active: 1;
@@ -84,7 +82,7 @@
       }
     }
 
-    .radio-image {
+    .radio-video {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -99,13 +97,13 @@
     }
 
     .dial-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 220ms ease;
-  z-index: 1;
-}
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 220ms ease;
+      z-index: 1;
+    }
 
     .dial-overlay.visible {
       opacity: 1;
@@ -113,10 +111,11 @@
 
     .dial-area {
       position: absolute;
-      left: calc(var(--dial-center-x) - var(--dial-size) / 2);
-      top: calc(var(--dial-center-y) - var(--dial-size) / 2);
+      left: 50%;
+      top: 50%;
       width: var(--dial-size);
       height: var(--dial-size);
+      transform: translate(-50%, -50%);
       pointer-events: none;
       overflow: visible;
     }
@@ -137,10 +136,18 @@
       transform-origin: center center;
       transition:
         transform var(--slot-transition),
-        opacity var(--slot-transition),
+        scale var(--slot-transition),
         filter var(--slot-transition);
       will-change: transform, opacity;
       pointer-events: none;
+    }
+
+    .ring-rotator {
+      position: absolute;
+      inset: 0;
+      transform-origin: center center;
+      pointer-events: none;
+      will-change: transform;
     }
 
     .ring-item.hidden {
@@ -157,22 +164,30 @@
     .ring-text {
       fill: var(--ring-color);
       font-family: "Inter";
-      font-weight: 100;
+      font-weight: 900;
       text-transform: uppercase;
       user-select: none;
       pointer-events: none;
       dominant-baseline: middle;
       text-rendering: geometricPrecision;
+      text-anchor: middle;
+    }
+
+    .measure-svg {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
     }
 
     @media (max-aspect-ratio: 3/4) {
       :root {
-        --dial-center-x: 50%;
-        --dial-center-y: 50%;
         --dial-size: 93%;
       }
 
-      .radio-image {
+      .radio-video {
         object-fit: cover;
       }
     }
@@ -183,8 +198,9 @@
 
   <div class="stage" id="stage">
     <button class="radio-button" id="radioBtn" aria-label="Activar radio antigua">
-      <img id="radioImg" class="radio-image" src="assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png"
-        alt="Radio antigua" />
+      <video id="radioVideo" class="radio-video" src="assets/VIDEOS/radioantigua/radioantigua_open.webm"
+        poster="assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png" preload="auto" playsinline
+        muted></video>
     </button>
 
     <div class="dial-overlay" id="dialOverlay" aria-hidden="true">
@@ -194,34 +210,29 @@
     </div>
   </div>
 
+  <svg class="measure-svg" aria-hidden="true">
+    <text id="measureText"></text>
+  </svg>
+
   <script>
-    const BASE_PATH = "assets/IMAGES/radioantigua/radioantigua_armado";
-    const PREFIX = "radioantigua_";
-    const EXT = ".png";
-    const FIRST = 0;
-    const LAST = 28;
-    const FRAME_TIME = 50;
+    const RADIO_VIDEO_PATH = "assets/VIDEOS/radioantigua/radioantigua_open.webm";
+    const RADIO_POSTER_PATH = "assets/IMAGES/radioantigua/radioantigua_armado/radioantigua_00.png";
+    const SEGMENT_GAP_DEG = 10;
 
     const radioBtn = document.getElementById("radioBtn");
-    const radioImg = document.getElementById("radioImg");
+    const radioVideo = document.getElementById("radioVideo");
     const dialOverlay = document.getElementById("dialOverlay");
     const menuLayer = document.getElementById("menuLayer");
     const stage = document.getElementById("stage");
+    const measureTextEl = document.getElementById("measureText");
 
     let playing = false;
-    let currentFrame = FIRST;
     let radioOpened = false;
     let hasUserGesture = false;
 
-    function framePath(n) {
-      const num = String(n).padStart(2, "0");
-      return `${BASE_PATH}/${PREFIX}${num}${EXT}`;
-    }
-
-    function setFrame(n) {
-      currentFrame = n;
-      radioImg.src = framePath(n);
-    }
+    radioVideo.src = RADIO_VIDEO_PATH;
+    radioVideo.poster = RADIO_POSTER_PATH;
+    radioVideo.currentTime = 0;
 
     async function playRadioSequence() {
       if (playing || radioOpened) return;
@@ -233,12 +244,25 @@
       void radioBtn.offsetWidth;
       radioBtn.classList.add("bounce");
 
-      for (let i = currentFrame + 1; i <= LAST; i++) {
-        setFrame(i);
-        await new Promise(r => setTimeout(r, FRAME_TIME));
-      }
+      try {
+        radioVideo.currentTime = 0;
+      } catch (e) { }
 
-      setFrame(LAST);
+      try {
+        await radioVideo.play();
+      } catch (e) {
+        playing = false;
+      }
+    }
+
+    radioVideo.addEventListener("loadedmetadata", () => {
+      try {
+        radioVideo.currentTime = 0;
+      } catch (e) { }
+    });
+
+    radioVideo.addEventListener("ended", () => {
+      radioVideo.pause();
       playing = false;
       radioOpened = true;
 
@@ -246,10 +270,9 @@
       dialOverlay.classList.add("visible");
       dialOverlay.setAttribute("aria-hidden", "false");
       menuSystem.activateCurrentFeed();
-    }
+    });
 
     radioBtn.addEventListener("click", playRadioSequence);
-    setFrame(FIRST);
 
     const feeds = [
       {
@@ -309,28 +332,74 @@
       return a + (b - a) * t;
     }
 
-    function buildLoopString(title, radius, fontSize, letterSpacing, weight = 100, isActive = false) {
-      if (isActive) {
-        const sidePad = "    ";
-        const middlePad = "     ";
-        return `${sidePad}${title}${middlePad}${title}${sidePad}`;
-      }
-      return title;
+    function degToRad(deg) {
+      return deg * Math.PI / 180;
     }
 
-    function circlePathD(cx, cy, r) {
+    function polarToCartesian(cx, cy, r, angleDeg) {
+      const rad = degToRad(angleDeg);
+      return {
+        x: cx + r * Math.cos(rad),
+        y: cy + r * Math.sin(rad)
+      };
+    }
+
+    function arcPathD(cx, cy, r, startDeg, endDeg) {
+      const start = polarToCartesian(cx, cy, r, startDeg);
+      const end = polarToCartesian(cx, cy, r, endDeg);
+
+      let delta = endDeg - startDeg;
+      while (delta < 0) delta += 360;
+      while (delta >= 360) delta -= 360;
+
+      const largeArcFlag = delta > 180 ? 1 : 0;
+
+      return `M ${start.x}, ${start.y} A ${r},${r} 0 ${largeArcFlag} 1 ${end.x}, ${end.y}`;
+    }
+
+    function buildSegmentString(title) {
+      return ` ${title} `;
+    }
+
+    function measureTextWidth(text, fontSize, letterSpacing, fontWeight = 900) {
+      measureTextEl.textContent = text;
+      measureTextEl.setAttribute("font-size", fontSize);
+      measureTextEl.setAttribute("letter-spacing", letterSpacing);
+      measureTextEl.style.fontFamily = "Inter";
+      measureTextEl.style.fontWeight = String(fontWeight);
+      return measureTextEl.getComputedTextLength();
+    }
+
+    function getSegmentCount(radius, fontSize, letterSpacing, title) {
+      const text = buildSegmentString(title);
+      const textWidth = measureTextWidth(text, fontSize, letterSpacing, 900);
+
+      const usableTwo = radius * degToRad(180 - SEGMENT_GAP_DEG);
+      const usableThree = radius * degToRad(120 - SEGMENT_GAP_DEG);
+
+      return textWidth <= usableThree ? 3 : 2;
+    }
+
+    function getSegmentAngles(segmentCount) {
+      if (segmentCount === 3) {
+        return [
+          { start: -90 + SEGMENT_GAP_DEG / 2, end: 30 - SEGMENT_GAP_DEG / 2 },
+          { start: 30 + SEGMENT_GAP_DEG / 2, end: 150 - SEGMENT_GAP_DEG / 2 },
+          { start: 150 + SEGMENT_GAP_DEG / 2, end: 270 - SEGMENT_GAP_DEG / 2 }
+        ];
+      }
+
       return [
-        `M ${cx - r}, ${cy}`,
-        `a ${r},${r} 0 1,1 ${r * 2},0`,
-        `a ${r},${r} 0 1,1 -${r * 2},0`
-      ].join(" ");
+        { start: 180 + SEGMENT_GAP_DEG / 2, end: 360 - SEGMENT_GAP_DEG / 2 },
+        { start: 0 + SEGMENT_GAP_DEG / 2, end: 180 - SEGMENT_GAP_DEG / 2 }
+      ];
     }
 
     const SLOT_OUTER = {
       name: "outer",
       x: 0,
       y: 0,
-      scale: 1.16,
+      scale: 1.218,
       opacity: 0.30,
       radius: 360,
       fontSize: 92,
@@ -341,7 +410,7 @@
       name: "active",
       x: 0,
       y: 0,
-      scale: 1.00,
+      scale: 1.05,
       opacity: 1.00,
       radius: 333.3,
       fontSize: 88.4,
@@ -352,7 +421,7 @@
       name: "inner",
       x: 0,
       y: 0,
-      scale: 0.78,
+      scale: 0.819,
       opacity: 0.30,
       radius: 310.8,
       fontSize: 124.8,
@@ -386,27 +455,43 @@
         this.el = document.createElement("div");
         this.el.className = "ring-item hidden";
 
+        this.rotator = document.createElement("div");
+        this.rotator.className = "ring-rotator";
+
         this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         this.svg.setAttribute("class", "ring-svg");
         this.svg.setAttribute("viewBox", "0 0 1000 1000");
         this.svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-        this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        this.pathId = `ringPath_${feed.id}_${feedIndex}`;
-        this.path.setAttribute("id", this.pathId);
-        this.path.setAttribute("fill", "none");
+        this.paths = [];
+        this.texts = [];
+        this.textPaths = [];
 
-        this.text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        this.text.setAttribute("class", "ring-text");
+        for (let i = 0; i < 3; i++) {
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          const pathId = `ringPath_${feed.id}_${feedIndex}_${i}`;
+          path.setAttribute("id", pathId);
+          path.setAttribute("fill", "none");
 
-        this.textPath = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-        this.textPath.setAttributeNS("http://www.w3.org/1999/xlink", "href", `#${this.pathId}`);
-        this.textPath.setAttribute("startOffset", "0%");
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("class", "ring-text");
 
-        this.text.appendChild(this.textPath);
-        this.svg.appendChild(this.path);
-        this.svg.appendChild(this.text);
-        this.el.appendChild(this.svg);
+          const textPath = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
+          textPath.setAttributeNS("http://www.w3.org/1999/xlink", "href", `#${pathId}`);
+          textPath.setAttribute("startOffset", "50%");
+
+          text.appendChild(textPath);
+
+          this.paths.push(path);
+          this.texts.push(text);
+          this.textPaths.push(textPath);
+
+          this.svg.appendChild(path);
+          this.svg.appendChild(text);
+        }
+
+        this.rotator.appendChild(this.svg);
+        this.el.appendChild(this.rotator);
         menuLayer.appendChild(this.el);
       }
 
@@ -442,50 +527,60 @@
         this.displayX = lerp(this.displayX, this.targetX, 0.12);
         this.displayY = lerp(this.displayY, this.targetY, 0.12);
         this.displayScale = lerp(this.displayScale, this.targetScale, 0.12);
-        this.displayOpacity = lerp(this.displayOpacity, this.targetOpacity, 0.12);
         this.displayRadius = lerp(this.displayRadius, this.targetRadius, 0.12);
         this.displayFontSize = lerp(this.displayFontSize, this.targetFontSize, 0.12);
         this.displayLetterSpacing = lerp(this.displayLetterSpacing, this.targetLetterSpacing, 0.12);
 
-        const visible = this.displayOpacity > 0.01;
-        this.el.classList.toggle("hidden", !visible);
+        const targetVisible = this.targetOpacity > 0.01;
+        this.displayOpacity = this.targetOpacity;
+
+        this.el.classList.toggle("hidden", !targetVisible);
 
         const cx = 500;
         const cy = 500;
-        this.path.setAttribute("d", circlePathD(cx, cy, this.displayRadius));
-
-        this.text.setAttribute("font-size", this.displayFontSize.toFixed(2));
-        this.text.setAttribute("letter-spacing", this.displayLetterSpacing.toFixed(2));
-
-        const isActive = this.targetSlot && this.targetSlot.name === "active";
-
-        if (isActive) {
-          this.text.style.fontFamily = "Inter";
-          this.text.style.fontWeight = "900";
-        } else {
-          this.text.style.fontFamily = "Inter";
-          this.text.style.fontWeight = "100";
-        }
-
-        const loopText = buildLoopString(
-          this.feed.title,
+        const textValue = buildSegmentString(this.feed.title);
+        const segmentCount = getSegmentCount(
           this.displayRadius,
           this.displayFontSize,
           this.displayLetterSpacing,
-          isActive ? 900 : 100,
-          isActive
+          this.feed.title
         );
-        this.textPath.textContent = loopText;
+        const angles = getSegmentAngles(segmentCount);
+
+        for (let i = 0; i < 3; i++) {
+          const path = this.paths[i];
+          const text = this.texts[i];
+          const textPath = this.textPaths[i];
+
+          if (i < segmentCount) {
+            const seg = angles[i];
+            path.setAttribute("d", arcPathD(cx, cy, this.displayRadius, seg.start, seg.end));
+            path.style.display = "";
+            text.style.display = "";
+
+            text.setAttribute("font-size", this.displayFontSize.toFixed(2));
+            text.setAttribute("letter-spacing", this.displayLetterSpacing.toFixed(2));
+            text.setAttribute("text-anchor", "middle");
+            text.style.fontFamily = "Inter";
+            text.style.fontWeight = "900";
+
+            textPath.textContent = textValue;
+          } else {
+            path.style.display = "none";
+            text.style.display = "none";
+            textPath.textContent = "";
+          }
+        }
 
         this.el.style.opacity = this.displayOpacity.toFixed(4);
-
-        const rotDeg = this.spinAngle * 180 / Math.PI;
         this.el.style.transform = `
           translate(-50%, -50%)
           translate(${this.displayX}px, ${this.displayY}px)
           scale(${this.displayScale})
-          rotate(${rotDeg}deg)
         `;
+
+        const rotDeg = this.spinAngle * 180 / Math.PI;
+        this.rotator.style.transform = `rotate(${rotDeg}deg)`;
       }
     }
 
@@ -503,8 +598,7 @@
       init() {
         this.visuals = feeds.map((feed, i) => new RingVisual(feed, i));
         this.rebuildTargets(true);
-        this.loop = this.loop.bind(this);
-        requestAnimationFrame(this.loop);
+        requestAnimationFrame(this.loop.bind(this));
 
         stage.addEventListener("mousemove", this.onMouseMove.bind(this), { passive: true });
         stage.addEventListener("mouseleave", this.onMouseLeave.bind(this), { passive: true });
@@ -611,7 +705,7 @@
         this.lastTime = now;
 
         this.visuals.forEach(v => v.update(dt));
-        requestAnimationFrame(this.loop);
+        requestAnimationFrame(this.loop.bind(this));
       }
     };
 
