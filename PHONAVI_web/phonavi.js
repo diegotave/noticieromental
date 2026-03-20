@@ -1,6 +1,9 @@
 const stage = document.getElementById("stage");
 const leftSpines = document.getElementById("leftSpines");
 const rightSpines = document.getElementById("rightSpines");
+const frontDisc = document.getElementById("frontDisc");
+const centerColumn = document.getElementById("centerColumn");
+const discOpenHotspot = document.getElementById("discOpenHotspot");
 
 const frontCoverA = document.getElementById("frontCoverA");
 const frontCoverB = document.getElementById("frontCoverB");
@@ -10,6 +13,10 @@ const metaArtistCurrent = document.getElementById("metaArtistCurrent");
 const metaTitleCurrent = document.getElementById("metaTitleCurrent");
 const metaArtistNext = document.getElementById("metaArtistNext");
 const metaTitleNext = document.getElementById("metaTitleNext");
+
+let trackPanel = document.getElementById("trackPanel");
+let trackPanelTitle = document.getElementById("trackPanelTitle");
+let trackList = document.getElementById("trackList");
 
 const albums = [
   {
@@ -32,9 +39,10 @@ const albums = [
   },
   {
     artist: "Lady Gaga",
-    title: "disc_name",
-    cover: "CDS/Lady_gaga-disc_name/cover1.jpg",
-    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+    title: "MAYHEM",
+    cover: "CDS/Lady Gaga - MAYHEM(2025)/cover1.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
+    tracksFile: "CDS/Lady Gaga - MAYHEM(2025)/tracks.json"
   },
   {
     artist: "Nirvana",
@@ -59,6 +67,8 @@ let isDragging = false;
 let dragLocked = false;
 let activePointerId = null;
 
+let tracksOpen = false;
+
 const DRAG_THRESHOLD = 90;
 const MAX_ELASTIC_PX = 120;
 const SPINES_PER_SIDE = 6;
@@ -73,6 +83,35 @@ function clamp(value, min, max) {
 
 function getAlbum(index) {
   return albums[mod(index, albums.length)];
+}
+
+function isLadyGagaAlbum(album) {
+  return album && album.artist === "Lady Gaga";
+}
+
+function ensureTrackPanel() {
+  if (trackPanel && trackPanelTitle && trackList) return;
+
+  trackPanel = document.createElement("div");
+  trackPanel.id = "trackPanel";
+  trackPanel.className = "track-panel";
+
+  const inner = document.createElement("div");
+  inner.className = "track-panel-inner";
+
+  trackPanelTitle = document.createElement("div");
+  trackPanelTitle.id = "trackPanelTitle";
+  trackPanelTitle.className = "track-panel-title";
+  trackPanelTitle.textContent = "Tracks";
+
+  trackList = document.createElement("ul");
+  trackList.id = "trackList";
+  trackList.className = "track-list";
+
+  inner.appendChild(trackPanelTitle);
+  inner.appendChild(trackList);
+  trackPanel.appendChild(inner);
+  centerColumn.appendChild(trackPanel);
 }
 
 function setMetaInstant(album) {
@@ -158,14 +197,11 @@ function makeSpine(album, side, distanceFromCenter) {
   spinePng.alt = "";
 
   if (distanceFromCenter === 0) {
-    wrap.classList.add("op100");
-    wrap.classList.add("sat80");
+    wrap.classList.add("op100", "sat80");
   } else if (distanceFromCenter === 1) {
-    wrap.classList.add("op80");
-    wrap.classList.add("sat60");
+    wrap.classList.add("op80", "sat60");
   } else {
-    wrap.classList.add("op60");
-    wrap.classList.add("sat40");
+    wrap.classList.add("op60", "sat40");
   }
 
   const shiftBase = distanceFromCenter * 2;
@@ -215,12 +251,150 @@ function clearElastic() {
   }, 360);
 }
 
+function setTrackListLoading() {
+  trackList.innerHTML = `<li class="loading">Cargando temas…</li>`;
+}
+
+function setTrackListError() {
+  trackList.innerHTML = `<li class="error">No pude leer la lista de temas.</li>`;
+}
+
+function setTrackListEmpty() {
+  trackList.innerHTML = `<li class="empty">No hay temas cargados.</li>`;
+}
+
+function renderTrackList(tracks) {
+  trackList.innerHTML = "";
+
+  if (!Array.isArray(tracks) || !tracks.length) {
+    setTrackListEmpty();
+    return;
+  }
+
+  tracks.forEach((track, index) => {
+    const li = document.createElement("li");
+    const label = typeof track === "string"
+      ? track
+      : (track.title || track.name || `Track ${index + 1}`);
+    li.textContent = `${index + 1}. ${label}`;
+    trackList.appendChild(li);
+  });
+}
+
+async function loadAlbumTracks(album) {
+  if (Array.isArray(album.tracks) && album.tracks.length) {
+    return album.tracks;
+  }
+
+  if (!album.tracksFile) {
+    return [];
+  }
+
+  const res = await fetch(album.tracksFile, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`No se pudo cargar ${album.tracksFile}`);
+  }
+
+  const data = await res.json();
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.tracks)) return data.tracks;
+  return [];
+}
+
+function triggerDiscBounce() {
+  frontDisc.classList.remove("bounce");
+  void frontDisc.offsetWidth;
+  frontDisc.classList.add("bounce");
+  window.setTimeout(() => {
+    frontDisc.classList.remove("bounce");
+  }, 460);
+}
+
+function updateDiscHotspot() {
+  const album = getAlbum(currentIndex);
+
+  if (isLadyGagaAlbum(album)) {
+    discOpenHotspot.classList.add("visible");
+  } else {
+    discOpenHotspot.classList.remove("visible");
+    discOpenHotspot.classList.remove("is-open");
+  }
+
+  if (tracksOpen && isLadyGagaAlbum(album)) {
+    discOpenHotspot.classList.add("is-open");
+  } else {
+    discOpenHotspot.classList.remove("is-open");
+  }
+}
+
+function closeTrackPanel() {
+  stage.classList.remove("tracks-open");
+  trackPanel.classList.remove("open");
+  tracksOpen = false;
+  updateDiscHotspot();
+}
+
+function openTrackPanelShell(album) {
+  trackPanelTitle.textContent = `${album.artist} — ${album.title}`;
+
+  stage.classList.remove("tracks-open");
+  trackPanel.classList.remove("open");
+  void stage.offsetHeight;
+  void trackPanel.offsetHeight;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      stage.classList.add("tracks-open");
+      trackPanel.classList.add("open");
+      tracksOpen = true;
+      updateDiscHotspot();
+    });
+  });
+}
+
+async function toggleLadyGagaTracks() {
+  const album = getAlbum(currentIndex);
+
+  if (!isLadyGagaAlbum(album)) return;
+  if (isAnimating) return;
+
+  if (tracksOpen) {
+    closeTrackPanel();
+    return;
+  }
+
+  triggerDiscBounce();
+  setTrackListLoading();
+  openTrackPanelShell(album);
+
+  try {
+    const tracks = await loadAlbumTracks(album);
+
+    if (!isLadyGagaAlbum(getAlbum(currentIndex))) return;
+
+    renderTrackList(tracks);
+  } catch (err) {
+    if (!isLadyGagaAlbum(getAlbum(currentIndex))) return;
+    setTrackListError();
+    console.error(err);
+  }
+}
+
 function goToIndex(nextIndex, direction) {
+  closeTrackPanel();
   currentIndex = mod(nextIndex, albums.length);
   const album = getAlbum(currentIndex);
   animateFrontCover(album, direction);
   switchMeta(album);
   renderSpines();
+  updateDiscHotspot();
+}
+
+function canStartCarouselDrag(e) {
+  if (e.target.closest("#trackPanel")) return false;
+  if (e.target.closest("#discOpenHotspot")) return false;
+  return true;
 }
 
 function handleRelease() {
@@ -246,6 +420,7 @@ function handleRelease() {
 
 function onPointerDown(e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
+  if (!canStartCarouselDrag(e)) return;
 
   activePointerId = e.pointerId;
   isDragging = true;
@@ -295,6 +470,8 @@ function onKeyDown(e) {
     goToIndex(currentIndex + 1, 1);
   } else if (e.key === "ArrowLeft") {
     goToIndex(currentIndex - 1, -1);
+  } else if (e.key === "Escape") {
+    closeTrackPanel();
   }
 }
 
@@ -311,18 +488,30 @@ function preloadImages() {
 }
 
 function init() {
+  ensureTrackPanel();
   preloadImages();
 
   const first = getAlbum(currentIndex);
   setFrontCoverInstant(first);
   setMetaInstant(first);
   renderSpines();
+  updateDiscHotspot();
 
   stage.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   window.addEventListener("pointerup", onPointerUp);
   window.addEventListener("pointercancel", onPointerCancel);
   window.addEventListener("keydown", onKeyDown);
+
+  discOpenHotspot.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+  });
+
+  discOpenHotspot.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleLadyGagaTracks();
+  });
 }
 
 init();

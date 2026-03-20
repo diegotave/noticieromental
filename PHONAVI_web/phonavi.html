@@ -12,7 +12,7 @@
 
     <div class="spines" id="leftSpines"></div>
 
-    <div class="center-column">
+    <div class="center-column" id="centerColumn">
       <div class="disc" id="frontDisc">
         <div class="cover-layer" id="coverLayer">
           <img class="cover cover-a" id="frontCoverA" src="" alt="">
@@ -20,6 +20,12 @@
         </div>
 
         <img class="frontpng" src="IMAGES/REPRODUCTOR_PHONAVI/FRENTECD.png" alt="">
+
+        <button class="disc-open-hotspot" id="discOpenHotspot" type="button" aria-label="Abrir disco">
+          <span class="disc-open-circle">
+            <span class="disc-open-triangle"></span>
+          </span>
+        </button>
       </div>
 
       <div class="album-meta" id="albumMeta">
@@ -31,6 +37,13 @@
         <div class="meta-slide next" id="metaNext">
           <div class="meta-artist" id="metaArtistNext"></div>
           <div class="meta-title" id="metaTitleNext"></div>
+        </div>
+      </div>
+
+      <div class="track-panel" id="trackPanel">
+        <div class="track-panel-inner">
+          <div class="track-panel-title" id="trackPanelTitle">Tracks</div>
+          <ul class="track-list" id="trackList"></ul>
         </div>
       </div>
     </div>
