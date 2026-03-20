@@ -71,7 +71,7 @@ let tracksOpen = false;
 
 const DRAG_THRESHOLD = 90;
 const MAX_ELASTIC_PX = 120;
-const SPINES_PER_SIDE = 6;
+const SPINES_PER_SIDE = 8;
 const MIN_CONTRACT_SCALE = 0.68;
 
 function mod(n, m) {
@@ -223,6 +223,16 @@ function updateSpineElasticGaps(deltaX = 0) {
   });
 }
 
+function getSpineOpacityClass(distanceFromCenter) {
+  const opacityClasses = ["op100", "op90", "op80", "op70", "op60", "op50", "op40", "op30"];
+  return opacityClasses[Math.min(distanceFromCenter, opacityClasses.length - 1)];
+}
+
+function getSpineSaturationClass(distanceFromCenter) {
+  const saturationClasses = ["sat100", "sat90", "sat80", "sat70", "sat60", "sat50", "sat40", "sat30"];
+  return saturationClasses[Math.min(distanceFromCenter, saturationClasses.length - 1)];
+}
+
 function makeSpine(album, side, distanceFromCenter) {
   const wrap = document.createElement("div");
   wrap.className = "spine-wrap";
@@ -239,13 +249,10 @@ function makeSpine(album, side, distanceFromCenter) {
   spinePng.src = album.spine;
   spinePng.alt = "";
 
-  if (distanceFromCenter === 0) {
-    wrap.classList.add("op100", "sat80");
-  } else if (distanceFromCenter === 1) {
-    wrap.classList.add("op80", "sat60");
-  } else {
-    wrap.classList.add("op60", "sat40");
-  }
+  wrap.classList.add(
+    getSpineOpacityClass(distanceFromCenter),
+    getSpineSaturationClass(distanceFromCenter)
+  );
 
   const shiftBase = distanceFromCenter * 2;
   wrap.style.setProperty(
