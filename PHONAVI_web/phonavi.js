@@ -21,21 +21,24 @@ let trackList = document.getElementById("trackList");
 const albums = [
   {
     artist: "Howe Gelb",
-    title: "disc_name",
-    cover: "CDS/Howe_Gelb-disc_name/Front.jpg",
-    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+    title: "Future Standards",
+    cover: "CDS/Howe Gelb - Future Standards/Front.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
+    tracksFile: "CDS/Howe Gelb - Future Standards/tracks.json"
   },
   {
     artist: "The Clash",
     title: "London Calling",
     cover: "CDS/TheClash_London calling/cover.jpg",
-    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
+    tracksFile: "CDS/TheClash_London calling/tracks.json"
   },
   {
     artist: "Cindy Lauper",
-    title: "She",
+    title: "She's So Unusual",
     cover: "CDS/Cindy Lauper - She/covercindy.jpg",
-    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
+    tracksFile: "CDS/Cindy Lauper - She/tracks.json"
   },
   {
     artist: "Lady Gaga",
@@ -48,7 +51,8 @@ const albums = [
     artist: "Nirvana",
     title: "Nevermind",
     cover: "CDS/Nirvana-nevermind/covernirvana.jpg",
-    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png"
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
+    tracksFile: "CDS/Nirvana-nevermind/tracks.json"
   }
 ];
 
@@ -86,8 +90,8 @@ function getAlbum(index) {
   return albums[mod(index, albums.length)];
 }
 
-function isLadyGagaAlbum(album) {
-  return album && album.artist === "Lady Gaga";
+function hasTracks(album) {
+  return !!album.tracksFile || (Array.isArray(album.tracks) && album.tracks.length > 0);
 }
 
 function ensureTrackPanel() {
@@ -293,7 +297,7 @@ function setElasticFromDrag(deltaX) {
   stage.style.setProperty("--elastic", elastic.toFixed(3));
 
   const moveX = clamp(deltaX * 0.18, -42, 42);
-  stage.style.transform = `translateX(${moveX}px)`;
+  stage.style.setProperty("--drag-x", `${moveX}px`);
 
   updateSpineElasticGaps(deltaX);
 }
@@ -301,12 +305,35 @@ function setElasticFromDrag(deltaX) {
 function clearElastic() {
   stage.style.setProperty("--elastic", "0");
   stage.style.transition = "transform 340ms cubic-bezier(0.22,1,0.36,1)";
-  stage.style.transform = "translateX(0)";
+  stage.style.setProperty("--drag-x", "0px");
   updateSpineElasticGaps(0);
 
   window.setTimeout(() => {
     stage.style.transition = "";
   }, 360);
+}
+
+function updateStageScale() {
+  requestAnimationFrame(() => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const topPadding = stage.classList.contains("tracks-open") ? viewportHeight * 0.05 : 0;
+    const horizontalPadding = viewportWidth * 0.03;
+
+    stage.style.setProperty("--scale", "1");
+
+    const rect = stage.getBoundingClientRect();
+
+    const availableWidth = viewportWidth - (horizontalPadding * 2);
+    const availableHeight = viewportHeight - topPadding;
+
+    const widthScale = rect.width > 0 ? Math.min(1, availableWidth / rect.width) : 1;
+    const heightScale = rect.height > 0 ? Math.min(1, availableHeight / rect.height) : 1;
+
+    const finalScale = Math.max(Math.min(widthScale, heightScale), 0.55);
+    stage.style.setProperty("--scale", finalScale.toFixed(4));
+  });
 }
 
 function setTrackListLoading() {
@@ -331,9 +358,14 @@ function renderTrackList(tracks) {
 
   tracks.forEach((track, index) => {
     const li = document.createElement("li");
-    const label = typeof track === "string"
-      ? track
-      : (track.title || track.name || `Track ${index + 1}`);
+    let label = `Track ${index + 1}`;
+
+    if (typeof track === "string") {
+      label = track;
+    } else if (track && typeof track === "object") {
+      label = track.title || track.name || label;
+    }
+
     li.textContent = `${index + 1}. ${label}`;
     trackList.appendChild(li);
   });
@@ -372,14 +404,14 @@ function triggerDiscBounce() {
 function updateDiscHotspot() {
   const album = getAlbum(currentIndex);
 
-  if (isLadyGagaAlbum(album)) {
+  if (hasTracks(album)) {
     discOpenHotspot.classList.add("visible");
   } else {
     discOpenHotspot.classList.remove("visible");
     discOpenHotspot.classList.remove("is-open");
   }
 
-  if (tracksOpen && isLadyGagaAlbum(album)) {
+  if (tracksOpen && hasTracks(album)) {
     discOpenHotspot.classList.add("is-open");
   } else {
     discOpenHotspot.classList.remove("is-open");
@@ -391,6 +423,7 @@ function closeTrackPanel() {
   trackPanel.classList.remove("open");
   tracksOpen = false;
   updateDiscHotspot();
+  updateStageScale();
 }
 
 function openTrackPanelShell(album) {
@@ -407,14 +440,15 @@ function openTrackPanelShell(album) {
       trackPanel.classList.add("open");
       tracksOpen = true;
       updateDiscHotspot();
+      updateStageScale();
     });
   });
 }
 
-async function toggleLadyGagaTracks() {
+async function toggleTracks() {
   const album = getAlbum(currentIndex);
 
-  if (!isLadyGagaAlbum(album)) return;
+  if (!hasTracks(album)) return;
   if (isAnimating) return;
 
   if (tracksOpen) {
@@ -429,13 +463,15 @@ async function toggleLadyGagaTracks() {
   try {
     const tracks = await loadAlbumTracks(album);
 
-    if (!isLadyGagaAlbum(getAlbum(currentIndex))) return;
+    if (getAlbum(currentIndex) !== album) return;
 
     renderTrackList(tracks);
+    updateStageScale();
   } catch (err) {
-    if (!isLadyGagaAlbum(getAlbum(currentIndex))) return;
+    if (getAlbum(currentIndex) !== album) return;
     setTrackListError();
     console.error(err);
+    updateStageScale();
   }
 }
 
@@ -447,6 +483,7 @@ function goToIndex(nextIndex, direction) {
   switchMeta(album);
   renderSpines();
   updateDiscHotspot();
+  updateStageScale();
 }
 
 function canStartCarouselDrag(e) {
@@ -530,6 +567,12 @@ function onKeyDown(e) {
     goToIndex(currentIndex - 1, -1);
   } else if (e.key === "Escape") {
     closeTrackPanel();
+  } else if (e.key === "Enter" || e.key === " ") {
+    const album = getAlbum(currentIndex);
+    if (hasTracks(album)) {
+      e.preventDefault();
+      toggleTracks();
+    }
   }
 }
 
@@ -554,12 +597,14 @@ function init() {
   setMetaInstant(first);
   renderSpines();
   updateDiscHotspot();
+  updateStageScale();
 
   stage.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   window.addEventListener("pointerup", onPointerUp);
   window.addEventListener("pointercancel", onPointerCancel);
   window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("resize", updateStageScale);
 
   discOpenHotspot.addEventListener("pointerdown", (e) => {
     e.stopPropagation();
@@ -568,7 +613,7 @@ function init() {
   discOpenHotspot.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleLadyGagaTracks();
+    toggleTracks();
   });
 }
 

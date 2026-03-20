@@ -24,6 +24,8 @@ body {
 .stage {
   --elastic: 0;
   --disc-size: 460px;
+  --scale: 1;
+  --offset-y: 0px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -33,10 +35,20 @@ body {
   will-change: transform;
   position: relative;
   flex: 0 0 auto;
+  max-width: 94vw;
+  transform:
+    translateX(var(--drag-x, 0px))
+    translateY(var(--offset-y))
+    scale(var(--scale));
+  transform-origin: center top;
 }
 
 .stage.dragging {
   cursor: grabbing;
+}
+
+.stage.tracks-open {
+  --offset-y: 5vh;
 }
 
 /* LOGO */
@@ -59,14 +71,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   flex: 0 0 auto;
-  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
-}
-
-.stage.tracks-open .center-column {
-  transform: translateY(calc(-50vh + (var(--disc-size) / 2) + var(--open-top-gap)));
+  min-width: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .disc {
@@ -369,8 +378,12 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 0;
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
   padding-top: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .spine-wrap {
@@ -392,6 +405,14 @@ body {
     margin-left 420ms cubic-bezier(0.22, 1, 0.36, 1),
     margin-right 420ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform, opacity, margin-left, margin-right;
+}
+
+#leftSpines {
+  justify-content: flex-end;
+}
+
+#rightSpines {
+  justify-content: flex-start;
 }
 
 #leftSpines .spine-wrap {
@@ -463,23 +484,8 @@ body {
     --open-top-gap: 24px;
   }
 
-  html,
-  body {
-    width: 100%;
-    height: 100%;
-  }
-
-  body {
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding-top: 0;
-    overflow: hidden;
-  }
-
   .stage {
-    transform-origin: center center;
-    align-items: flex-start;
+    transform-origin: center top;
   }
 }
 
@@ -489,8 +495,7 @@ body {
   }
 
   .stage {
-    transform-origin: center center;
-    align-items: flex-start;
+    transform-origin: center top;
   }
 
   .track-list li {
