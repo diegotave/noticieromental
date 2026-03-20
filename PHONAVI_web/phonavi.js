@@ -72,6 +72,7 @@ let tracksOpen = false;
 const DRAG_THRESHOLD = 90;
 const MAX_ELASTIC_PX = 120;
 const SPINES_PER_SIDE = 6;
+const MIN_CONTRACT_SCALE = 0.68;
 
 function mod(n, m) {
   return ((n % m) + m) % m;
@@ -182,9 +183,51 @@ function animateFrontCover(nextAlbum, direction) {
   }, 430);
 }
 
+function getGapScaleForSide(side, deltaX) {
+  const amount = clamp(Math.abs(deltaX) / MAX_ELASTIC_PX, 0, 1);
+  const eased = 1 - Math.pow(1 - amount, 2);
+
+  if (deltaX > 0) {
+    return side === "right"
+      ? 1 + eased
+      : 1 - ((1 - MIN_CONTRACT_SCALE) * eased);
+  }
+
+  if (deltaX < 0) {
+    return side === "left"
+      ? 1 + eased
+      : 1 - ((1 - MIN_CONTRACT_SCALE) * eased);
+  }
+
+  return 1;
+}
+
+function applySpineGap(wrap, scale = 1) {
+  const gapIndex = Number(wrap.dataset.gapIndex || 1);
+  wrap.style.setProperty(
+    "--spine-gap",
+    `calc((var(--disc-size) * ${gapIndex} * ${scale}) / 100)`
+  );
+}
+
+function updateSpineElasticGaps(deltaX = 0) {
+  const leftScale = getGapScaleForSide("left", deltaX);
+  const rightScale = getGapScaleForSide("right", deltaX);
+
+  leftSpines.querySelectorAll(".spine-wrap").forEach((wrap) => {
+    applySpineGap(wrap, leftScale);
+  });
+
+  rightSpines.querySelectorAll(".spine-wrap").forEach((wrap) => {
+    applySpineGap(wrap, rightScale);
+  });
+}
+
 function makeSpine(album, side, distanceFromCenter) {
   const wrap = document.createElement("div");
   wrap.className = "spine-wrap";
+  wrap.dataset.side = side;
+  wrap.dataset.gapIndex = String(distanceFromCenter + 1);
 
   const cover = document.createElement("img");
   cover.className = "spine-cover";
@@ -210,6 +253,8 @@ function makeSpine(album, side, distanceFromCenter) {
     `${side === "left" ? shiftBase : -shiftBase}px`
   );
 
+  applySpineGap(wrap, 1);
+
   wrap.appendChild(cover);
   wrap.appendChild(spinePng);
 
@@ -222,7 +267,7 @@ function renderSpines() {
 
   for (let i = SPINES_PER_SIDE; i >= 1; i--) {
     const album = getAlbum(currentIndex - i);
-    const distanceFromCenter = SPINES_PER_SIDE - i;
+    const distanceFromCenter = i - 1;
     leftSpines.appendChild(makeSpine(album, "left", distanceFromCenter));
   }
 
@@ -231,6 +276,8 @@ function renderSpines() {
     const distanceFromCenter = i - 1;
     rightSpines.appendChild(makeSpine(album, "right", distanceFromCenter));
   }
+
+  updateSpineElasticGaps(0);
 }
 
 function setElasticFromDrag(deltaX) {
@@ -240,12 +287,16 @@ function setElasticFromDrag(deltaX) {
 
   const moveX = clamp(deltaX * 0.18, -42, 42);
   stage.style.transform = `translateX(${moveX}px)`;
+
+  updateSpineElasticGaps(deltaX);
 }
 
 function clearElastic() {
   stage.style.setProperty("--elastic", "0");
   stage.style.transition = "transform 340ms cubic-bezier(0.22,1,0.36,1)";
   stage.style.transform = "translateX(0)";
+  updateSpineElasticGaps(0);
+
   window.setTimeout(() => {
     stage.style.transition = "";
   }, 360);
