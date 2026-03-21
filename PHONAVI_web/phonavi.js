@@ -325,20 +325,24 @@ function updateStageScale() {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    const topPadding = stage.classList.contains("tracks-open") ? viewportHeight * 0.05 : 0;
-    const horizontalPadding = viewportWidth * 0.03;
-
+    // Reset para medir tamaño natural
     stage.style.setProperty("--scale", "1");
 
-    const rect = stage.getBoundingClientRect();
+    // Solo miramos la columna central — los lomos se cropean solos
+    const rect = centerColumn.getBoundingClientRect();
 
-    const availableWidth = viewportWidth - (horizontalPadding * 2);
-    const availableHeight = viewportHeight - topPadding;
+    const hPad = viewportWidth * 0.06;
+    const vPad = stage.classList.contains("tracks-open")
+      ? viewportHeight * 0.05
+      : viewportHeight * 0.04;
 
-    const widthScale = rect.width > 0 ? Math.min(1, availableWidth / rect.width) : 1;
+    const availableWidth  = viewportWidth  - hPad * 2;
+    const availableHeight = viewportHeight - vPad;
+
+    const widthScale  = rect.width  > 0 ? Math.min(1, availableWidth  / rect.width)  : 1;
     const heightScale = rect.height > 0 ? Math.min(1, availableHeight / rect.height) : 1;
 
-    const finalScale = Math.max(Math.min(widthScale, heightScale), 0.55);
+    const finalScale = Math.max(Math.min(widthScale, heightScale), 0.3);
     stage.style.setProperty("--scale", finalScale.toFixed(4));
   });
 }
@@ -355,119 +359,25 @@ function setTrackListEmpty() {
   trackList.innerHTML = `<li class="empty">No hay temas cargados.</li>`;
 }
 
-// ── AUDIO: CONVIERTE URL DE DRIVE A URL STREAMABLE ───────────────────────────
-function getDriveStreamUrl(url) {
-  if (!url) return url;
-
-  // Formato: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
-  const fileMatch = url.match(/\/file\/d\/([^/]+)/);
-  if (fileMatch) {
-    return `https://drive.google.com/uc?export=download&id=${fileMatch[1]}`;
-  }
-
-  // Formato: https://drive.google.com/open?id=FILE_ID
-  const openMatch = url.match(/[?&]id=([^&]+)/);
-  if (openMatch) {
-    return `https://drive.google.com/uc?export=download&id=${openMatch[1]}`;
-  }
-
-  // Ya es URL directa o formato uc
-  return url;
-}
-
-// ── AUDIO: MINI PLAYER ───────────────────────────────────────────────────────
-let miniPlayer = null;
-let miniPlayerTrackName = null;
-let miniPlayerPlayBtn = null;
-let miniPlayerProgress = null;
-let miniPlayerProgressFill = null;
-let miniPlayerTime = null;
-
-function ensureMiniPlayer() {
-  if (miniPlayer) return;
-
-  miniPlayer = document.createElement("div");
-  miniPlayer.className = "mini-player";
-  miniPlayer.innerHTML = `
-    <div class="mini-player-track" id="miniPlayerTrackName">—</div>
-    <div class="mini-player-controls">
-      <button class="mini-player-btn" id="miniPlayerPrev" aria-label="Anterior">&#9664;&#9664;</button>
-      <button class="mini-player-btn mini-player-playpause" id="miniPlayerPlayBtn" aria-label="Play/Pause">&#9654;</button>
-      <button class="mini-player-btn" id="miniPlayerNext" aria-label="Siguiente">&#9654;&#9654;</button>
-    </div>
-    <div class="mini-player-progress-wrap">
-      <div class="mini-player-progress" id="miniPlayerProgress">
-        <div class="mini-player-progress-fill" id="miniPlayerProgressFill"></div>
-      </div>
-      <span class="mini-player-time" id="miniPlayerTime">0:00</span>
-    </div>
-  `;
-
-  document.body.appendChild(miniPlayer);
-
-  miniPlayerTrackName = document.getElementById("miniPlayerTrackName");
-  miniPlayerPlayBtn = document.getElementById("miniPlayerPlayBtn");
-  miniPlayerProgress = document.getElementById("miniPlayerProgress");
-  miniPlayerProgressFill = document.getElementById("miniPlayerProgressFill");
-  miniPlayerTime = document.getElementById("miniPlayerTime");
-
-  document.getElementById("miniPlayerPlayBtn").addEventListener("click", toggleAudioPlayPause);
-  document.getElementById("miniPlayerPrev").addEventListener("click", playPrevTrack);
-  document.getElementById("miniPlayerNext").addEventListener("click", playNextTrack);
-
-  miniPlayerProgress.addEventListener("click", (e) => {
-    if (!audio.duration) return;
-    const rect = miniPlayerProgress.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    audio.currentTime = ratio * audio.duration;
-  });
-
-  audio.addEventListener("timeupdate", onAudioTimeUpdate);
-  audio.addEventListener("ended", onAudioEnded);
-  audio.addEventListener("play", onAudioPlay);
-  audio.addEventListener("pause", onAudioPause);
-  audio.addEventListener("error", onAudioError);
-}
-
-function formatTime(seconds) {
-  if (isNaN(seconds)) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function onAudioTimeUpdate() {
-  if (!audio.duration) return;
-  const pct = (audio.currentTime / audio.duration) * 100;
-  if (miniPlayerProgressFill) miniPlayerProgressFill.style.width = `${pct}%`;
-  if (miniPlayerTime) miniPlayerTime.textContent = formatTime(audio.currentTime);
-}
-
-function onAudioEnded() {
-  playNextTrack();
-}
-
-function onAudioPlay() {
-  if (miniPlayerPlayBtn) miniPlayerPlayBtn.innerHTML = "&#9646;&#9646;";
-  updateTrackListHighlight();
-}
-
-function onAudioPause() {
-  if (miniPlayerPlayBtn) miniPlayerPlayBtn.innerHTML = "&#9654;";
-  updateTrackListHighlight();
-}
-
-function onAudioError() {
-  if (miniPlayerTrackName) miniPlayerTrackName.textContent = "⚠ Error al cargar el audio";
-}
+// ── AUDIO EVENTS ─────────────────────────────────────────────────────────────
+audio.addEventListener("ended",  () => playNextTrack());
+audio.addEventListener("play",   () => updateTrackListHighlight());
+audio.addEventListener("pause",  () => updateTrackListHighlight());
 
 function updateTrackListHighlight() {
   if (!trackList) return;
   const items = trackList.querySelectorAll("li[data-track-index]");
   items.forEach((li) => {
     const idx = parseInt(li.dataset.trackIndex, 10);
-    li.classList.toggle("playing", idx === nowPlayingIndex && !audio.paused);
-    li.classList.toggle("paused", idx === nowPlayingIndex && audio.paused);
+    const icon = li.querySelector(".track-icon");
+    if (!icon) return;
+    if (idx === nowPlayingIndex) {
+      icon.textContent = audio.paused ? "⏸" : "▶";
+      li.classList.add("is-current");
+    } else {
+      icon.textContent = "";
+      li.classList.remove("is-current");
+    }
   });
 }
 
@@ -499,7 +409,6 @@ function playTrack(track, index) {
   const url = typeof track === "string" ? null : track.url;
 
   if (!url) {
-    // Pista sin URL: solo actualizar highlight
     nowPlayingIndex = index;
     updateTrackListHighlight();
     return;
@@ -508,27 +417,16 @@ function playTrack(track, index) {
   nowPlayingIndex = index;
   nowPlayingAlbumIndex = currentIndex;
 
-  ensureMiniPlayer();
-
-  const streamUrl = getDriveStreamUrl(url);
-  const title = (typeof track === "object" ? (track.title || track.name) : track) || `Track ${index + 1}`;
-
   audio.pause();
-  audio.src = streamUrl;
+  audio.src = url;
   audio.load();
   audio.play().catch((err) => {
     console.warn("Audio play error:", err);
   });
 
-  if (miniPlayerTrackName) miniPlayerTrackName.textContent = title;
-  if (miniPlayerProgressFill) miniPlayerProgressFill.style.width = "0%";
-  if (miniPlayerTime) miniPlayerTime.textContent = "0:00";
-
-  miniPlayer.classList.add("visible");
   updateTrackListHighlight();
 }
 
-// ── RENDER TRACK LIST (con soporte de click para audio) ───────────────────────
 function renderTrackList(tracks) {
   trackList.innerHTML = "";
   currentTracks = tracks;
@@ -551,7 +449,15 @@ function renderTrackList(tracks) {
       label = track.title || track.name || label;
     }
 
-    li.textContent = `${index + 1}. ${label}`;
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "track-name";
+    nameSpan.textContent = `${index + 1}. ${label}`;
+
+    const icon = document.createElement("span");
+    icon.className = "track-icon";
+
+    li.appendChild(nameSpan);
+    li.appendChild(icon);
 
     if (hasUrl) {
       li.classList.add("playable");
@@ -567,7 +473,6 @@ function renderTrackList(tracks) {
     trackList.appendChild(li);
   });
 
-  // Restaurar highlight si ya hay algo reproduciendo de este album
   if (nowPlayingAlbumIndex === currentIndex) {
     updateTrackListHighlight();
   }
@@ -629,7 +534,8 @@ function closeTrackPanel() {
 }
 
 function openTrackPanelShell(album) {
-  trackPanelTitle.textContent = `${album.artist} — ${album.title}`;
+  // título oculto por diseño, pero lo mantenemos por si se necesita en el futuro
+  if (trackPanelTitle) trackPanelTitle.textContent = "";
 
   stage.classList.remove("tracks-open");
   trackPanel.classList.remove("open");
@@ -691,7 +597,6 @@ function goToIndex(nextIndex, direction) {
 function canStartCarouselDrag(e) {
   if (e.target.closest("#trackPanel")) return false;
   if (e.target.closest("#discOpenHotspot")) return false;
-  if (e.target.closest(".mini-player")) return false;
   return true;
 }
 
