@@ -18,41 +18,50 @@ let trackPanel = document.getElementById("trackPanel");
 let trackPanelTitle = document.getElementById("trackPanelTitle");
 let trackList = document.getElementById("trackList");
 
+const R2 = "https://pub-4ad247018d50485fa0850c9164489c59.r2.dev";
+
 const albums = [
   {
     artist: "Howe Gelb",
     title: "Future Standards",
-    cover: "CDS/Howe Gelb - Future Standards/Front.jpg",
+    cover: R2 + "/CDS/Howe Gelb - Future Standards/Front.jpg",
     spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
-    tracksFile: "CDS/Howe Gelb - Future Standards/tracks.json"
+    tracksFile: R2 + "/CDS/Howe Gelb - Future Standards/tracks.json"
   },
   {
     artist: "The Clash",
     title: "London Calling",
-    cover: "CDS/TheClash_London calling/cover.jpg",
+    cover: R2 + "/CDS/TheClash_London calling/cover.jpg",
     spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
-    tracksFile: "CDS/TheClash_London calling/tracks.json"
+    tracksFile: R2 + "/CDS/TheClash_London calling/tracks.json"
   },
   {
     artist: "Cindy Lauper",
     title: "She's So Unusual",
-    cover: "CDS/Cindy Lauper - She/covercindy.jpg",
+    cover: R2 + "/CDS/Cindy Lauper - She/covercindy.jpg",
     spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
-    tracksFile: "CDS/Cindy Lauper - She/tracks.json"
+    tracksFile: R2 + "/CDS/Cindy Lauper - She/tracks.json"
   },
   {
     artist: "Lady Gaga",
     title: "MAYHEM",
-    cover: "CDS/Lady Gaga - MAYHEM(2025)/cover1.jpg",
+    cover: R2 + "/CDS/Lady Gaga - MAYHEM(2025)/cover1.jpg",
     spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
-    tracksFile: "CDS/Lady Gaga - MAYHEM(2025)/tracks.json"
+    tracksFile: R2 + "/CDS/Lady Gaga - MAYHEM(2025)/tracks.json"
+  },
+  {
+    artist: "The Beatles",
+    title: "Abbey Road",
+    cover: R2 + "/CDS/The Beatles - Abbey Road [320-Bubanee]/folder.jpg",
+    spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
+    tracksFile: R2 + "/CDS/The Beatles - Abbey Road [320-Bubanee]/tracks.json"
   },
   {
     artist: "Nirvana",
     title: "Nevermind",
-    cover: "CDS/Nirvana-nevermind/covernirvana.jpg",
+    cover: R2 + "/CDS/Nirvana-nevermind/covernirvana.jpg",
     spine: "IMAGES/REPRODUCTOR_PHONAVI/LOMOCD5.png",
-    tracksFile: "CDS/Nirvana-nevermind/tracks.json"
+    tracksFile: R2 + "/CDS/Nirvana-nevermind/tracks.json"
   }
 ];
 
@@ -150,8 +159,8 @@ function switchMeta(album) {
 }
 
 function setFrontCoverInstant(album) {
-  frontCoverA.src = album.cover;
-  frontCoverB.src = album.cover;
+  frontCoverA.src = encodeURI(album.cover);
+  frontCoverB.src = encodeURI(album.cover);
   frontCoverA.style.transform = "translateX(0)";
   frontCoverB.style.transform = "translateX(100%)";
   currentFront = "A";
@@ -164,7 +173,7 @@ function animateFrontCover(nextAlbum, direction) {
   const visible = currentFront === "A" ? frontCoverA : frontCoverB;
   const hidden = currentFront === "A" ? frontCoverB : frontCoverA;
 
-  hidden.src = nextAlbum.cover;
+  hidden.src = encodeURI(nextAlbum.cover);
 
   const fromX = direction > 0 ? "100%" : "-100%";
   const toX = direction > 0 ? "-100%" : "100%";
@@ -252,7 +261,7 @@ function makeSpine(album, side, distanceFromCenter) {
 
   const cover = document.createElement("img");
   cover.className = "spine-cover";
-  cover.src = album.cover;
+  cover.src = encodeURI(album.cover);
   cover.alt = "";
 
   const spinePng = document.createElement("img");
@@ -487,7 +496,7 @@ async function loadAlbumTracks(album) {
     return [];
   }
 
-  const res = await fetch(album.tracksFile, { cache: "no-store" });
+  const res = await fetch(encodeURI(album.tracksFile), { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`No se pudo cargar ${album.tracksFile}`);
   }
