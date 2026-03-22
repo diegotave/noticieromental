@@ -1,18 +1,20 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const VISIBLE_LANDSCAPE = 35;   // 17 each side + center
+const VISIBLE_LANDSCAPE = 25;
 const VISIBLE_PORTRAIT  = 7;
-const MAX_PRESEL_SIDE   = 11;
+const MAX_PRESEL_SIDE   = 11;   // slots selectable each side of center
 
 // Dial speed by zone (5 zones, symmetric)
+// normX [0,1] → albums/frame
+// zones: |0–0.2| slow-edge, |0.2–0.4| medium, |0.4–0.6| very-slow-center
 function dialSpeed(normX) {
-  const d = normX - 0.5;
+  const d = normX - 0.5;          // [-0.5 , 0.5]
   const a = Math.abs(d);
   let mag;
-  if      (a < 0.10) mag = 0.003;
-  else if (a < 0.20) mag = 0.008;
-  else if (a < 0.30) mag = 0.016;
-  else if (a < 0.40) mag = 0.028;
-  else               mag = 0.042;
+  if      (a < 0.10) mag = 0.0015;   // inner fifth: ultra slow
+  else if (a < 0.20) mag = 0.004;    // next band
+  else if (a < 0.30) mag = 0.009;    // middle-outer
+  else if (a < 0.40) mag = 0.016;    // outer band
+  else               mag = 0.026;    // edge fifth
   return Math.sign(d) * mag;
 }
 
@@ -41,36 +43,36 @@ function isPortrait(){ return window.innerWidth < window.innerHeight || window.i
 function getVisible(){ return isPortrait() ? VISIBLE_PORTRAIT : VISIBLE_LANDSCAPE; }
 
 // ── HEIGHT by dist from active ─────────────────────────────────────────────
-// Inactive base = 85%. Active grows +10% over base = ~98%, ±1 +5% = ~89%
 function getHeight(dist){
-  if(dist === 0) return 98;
-  if(dist === 1) return 89;
-  return 85;
+  if(dist === 0) return 115;
+  if(dist === 1) return 110;
+  if(dist === 2) return 105;
+  return 100;
 }
 
 // ── OPACITY by dist ────────────────────────────────────────────────────────
 function getOpacity(dist){
   if(dist === 0) return 1.00;
-  if(dist === 1) return 0.90;
-  if(dist === 2) return 0.85;
-  if(dist <= 5)  return 0.75;
+  if(dist <= 2)  return 0.90;
+  if(dist <= 4)  return 0.80;
   return 0.55;
 }
 
 // ── MARGINS ───────────────────────────────────────────────────────────────────
-// Base: 2px each side = 4px between inactives
-// active ↔ ±1: was 6px → doubled = 12px  (active 6+6, ±1 inner 6)
-// ±1    ↔ ±2: was 5px → ×1.5   = 7.5px  (±1 outer 3.75, ±2 inner 3.75)
-// rest: 4px
+// Returns [marginLeft, marginRight] in px for slot i given activeSlot.
+// Base gap between any two slots = 0.5 + 0.5 = 1px.
+// active ↔ ±1 gap: 3px  → active gets 1.5 each side, ±1 gets 1.5 on inner side
+// ±1    ↔ ±2 gap: 2px  → ±1 gets 1.0 on outer side,  ±2 gets 1.0 on inner side
+// rest:            1px  → 0.5 each
 function getMargins(i, active){
-  if(active < 0) return [2, 2];
+  if(active < 0) return [0.5, 0.5];
   const dist = i - active;
-  if(dist ===  0) return [6,    6   ];
-  if(dist ===  1) return [6,    3.75];
-  if(dist === -1) return [3.75, 6   ];
-  if(dist ===  2) return [3.75, 2   ];
-  if(dist === -2) return [2,    3.75];
-  return [2, 2];
+  if(dist ===  0) return [1.5, 1.5];
+  if(dist ===  1) return [1.5, 1.0];
+  if(dist === -1) return [1.0, 1.5];
+  if(dist ===  2) return [1.0, 0.5];
+  if(dist === -2) return [0.5, 1.0];
+  return [0.5, 0.5];
 }
 
 // ── BUILD SLOTS ───────────────────────────────────────────────────────────────
@@ -111,24 +113,14 @@ function buildSlots(){
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render(){
   const n    = slots.length;
-  // floor instead of round — slots swap exactly when offset crosses integer
-  // (one direction only, no 0.5 jump)
-  const base = Math.floor(albumOffset);
+  const base = Math.round(albumOffset);
 
   for(let i = 0; i < n; i++){
     const { slotEl, visual, coverImg, spineImg, label } = slots[i];
 
+    // album for this slot
     const albumIdx = mod(base + i, albums.length);
     const album    = albums[albumIdx];
-
-    // preload next album so there's no image-load stutter on swap
-    const nextIdx = mod(base + i + 1, albums.length);
-    const nextAlbum = albums[nextIdx];
-    if(!nextAlbum._preloaded){
-      const img = new Image();
-      img.src = encodeURI(nextAlbum.cover);
-      nextAlbum._preloaded = true;
-    }
 
     if(coverImg.dataset.src !== album.cover){
       coverImg.src = encodeURI(album.cover);
@@ -139,20 +131,24 @@ function render(){
       spineImg.dataset.src = album.spine;
     }
 
-    const dist     = activeSlot >= 0 ? Math.abs(i - activeSlot) : -1;
+    const dist    = activeSlot >= 0 ? Math.abs(i - activeSlot) : -1;
     const isActive = dist === 0;
 
-    visual.style.height  = (dist >= 0 ? getHeight(dist) : 85) + "%";
-    visual.style.opacity = (dist >= 0 ? getOpacity(dist) : 0.70).toFixed(2);
+    // height & opacity
+    visual.style.height  = (dist >= 0 ? getHeight(dist)  : 60)   + "%";
+    visual.style.opacity = (dist >= 0 ? getOpacity(dist) : 0.55).toFixed(2);
 
+    // margins
     const [ml, mr] = getMargins(i, activeSlot);
     slotEl.style.marginLeft  = ml + "px";
     slotEl.style.marginRight = mr + "px";
 
+    // active label
     slotEl.classList.toggle("is-active", isActive);
     label.textContent = isActive ? `${album.artist}  —  ${album.title}` : "";
   }
 
+  // preview
   const previewArea  = document.getElementById("previewArea");
   const previewCover = document.getElementById("previewCover");
 
@@ -163,16 +159,8 @@ function render(){
       previewCover.src = encodeURI(album.cover);
       previewCover.dataset.src = album.cover;
     }
-    // center on the spine-visual element (the actual LOMOCD5 width)
-    const activeVisual = slots[activeSlot]?.visual;
-    if(activeVisual){
-      const rect = activeVisual.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      previewArea.style.left = centerX + "px";
-    } else {
-      const leftPct = ((activeSlot + 0.5) / n * 100).toFixed(2);
-      previewArea.style.left = leftPct + "%";
-    }
+    const leftPct = ((activeSlot + 0.5) / n * 100).toFixed(2);
+    previewArea.style.left = leftPct + "%";
     previewArea.classList.add("visible");
   } else {
     previewArea.classList.remove("visible");
@@ -191,20 +179,15 @@ function onPointerMove(e){
   pointerOn   = true;
   normCursorX = clamp(e.clientX / window.innerWidth, 0, 1);
 
-  const n      = slots.length;
+  // which slot is under cursor
+  const n     = slots.length;
+  const rawSlot = clamp(Math.floor(normCursorX * n), 0, n - 1);
+
+  // limit preselection to MAX_PRESEL_SIDE each side of center
   const center = Math.floor(n / 2);
+  const clamped = clamp(rawSlot, center - MAX_PRESEL_SIDE, center + MAX_PRESEL_SIDE);
 
-  // interaction zone: center ± MAX_PRESEL_SIDE slots wide
-  // expressed as fraction of viewport
-  const zoneHalf = (MAX_PRESEL_SIDE + 0.5) / n;
-  const inZone   = normCursorX >= (0.5 - zoneHalf) && normCursorX <= (0.5 + zoneHalf);
-
-  if(inZone){
-    const rawSlot = clamp(Math.floor(normCursorX * n), 0, n - 1);
-    activeSlot = clamp(rawSlot, center - MAX_PRESEL_SIDE, center + MAX_PRESEL_SIDE);
-  } else {
-    activeSlot = -1;
-  }
+  activeSlot = clamped;
 }
 
 function onPointerLeave(){

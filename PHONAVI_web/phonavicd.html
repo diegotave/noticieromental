@@ -9,69 +9,23 @@
 </head>
 
 <body>
-  <div class="stage" id="stage">
+  <div id="stage">
+
     <div class="logo-row" id="logoRow">
       <img
         class="phonavi-logo"
         src="IMAGES/REPRODUCTOR_PHONAVI/phonavi_logo_discoteca.png"
         alt="Phonavi"
       >
-      <button
-        class="theme-toggle"
-        id="themeToggle"
-        type="button"
-        aria-label="Cambiar tema"
-      ></button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema"></button>
     </div>
 
-    <div class="spines" id="leftSpines"></div>
-
-    <div class="center-column" id="centerColumn">
-      <div class="disc" id="frontDisc">
-        <div class="cover-layer" id="coverLayer">
-          <img class="cover cover-a" id="frontCoverA" src="" alt="">
-          <img class="cover cover-b" id="frontCoverB" src="" alt="">
-        </div>
-
-        <img
-          class="frontpng"
-          src="IMAGES/REPRODUCTOR_PHONAVI/FRENTECD.png"
-          alt=""
-        >
-
-        <button
-          class="disc-open-hotspot"
-          id="discOpenHotspot"
-          type="button"
-          aria-label="Abrir disco"
-        >
-          <span class="disc-open-circle">
-            <span class="disc-open-triangle"></span>
-          </span>
-        </button>
-      </div>
-
-      <div class="album-meta" id="albumMeta">
-        <div class="meta-slide current" id="metaCurrent">
-          <div class="meta-artist" id="metaArtistCurrent"></div>
-          <div class="meta-title" id="metaTitleCurrent"></div>
-        </div>
-
-        <div class="meta-slide next" id="metaNext">
-          <div class="meta-artist" id="metaArtistNext"></div>
-          <div class="meta-title" id="metaTitleNext"></div>
-        </div>
-      </div>
-
-      <div class="track-panel" id="trackPanel">
-        <div class="track-panel-inner">
-          <div class="track-panel-title" id="trackPanelTitle">Tracks</div>
-          <ul class="track-list" id="trackList"></ul>
-        </div>
-      </div>
+    <div id="previewArea">
+      <img id="previewCover" src="" alt="">
     </div>
 
-    <div class="spines" id="rightSpines"></div>
+    <div id="spineRail"></div>
+
   </div>
 
   <script src="phonavicd.js"></script>
