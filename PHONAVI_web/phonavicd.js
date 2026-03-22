@@ -739,4 +739,42 @@ function init() {
   });
 }
 
+// ── THEME TOGGLE ─────────────────────────────────────────────────────────────
+
+const themeToggle = document.getElementById("themeToggle");
+
+const moonSVG = `<svg viewBox="0 0 10 10" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <path d="M7.5 6.5A4 4 0 0 1 3.5 1.2a.3.3 0 0 0-.4-.35A4.5 4.5 0 1 0 9.15 6.9a.3.3 0 0 0-.35-.4 4 4 0 0 1-1.3.0z"/>
+</svg>`;
+
+const sunSVG = `<svg viewBox="0 0 10 10" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="5" cy="5" r="1.8"/>
+  <line x1="5" y1="0.4" x2="5" y2="1.8" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="5" y1="8.2" x2="5" y2="9.6" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="0.4" y1="5" x2="1.8" y2="5" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="8.2" y1="5" x2="9.6" y2="5" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="1.7" y1="1.7" x2="2.7" y2="2.7" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="7.3" y1="7.3" x2="8.3" y2="8.3" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="8.3" y1="1.7" x2="7.3" y2="2.7" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="2.7" y1="7.3" x2="1.7" y2="8.3" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+</svg>`;
+
+function applyTheme(dark) {
+  document.body.classList.toggle("dark", dark);
+  themeToggle.innerHTML = dark ? sunSVG : moonSVG;
+  try { localStorage.setItem("phonavi-theme", dark ? "dark" : "light"); } catch(e) {}
+}
+
+themeToggle.addEventListener("pointerdown", (e) => {
+  e.stopPropagation();
+});
+
+themeToggle.addEventListener("click", (e) => {
+  e.stopPropagation();
+  applyTheme(!document.body.classList.contains("dark"));
+});
+
+const savedTheme = (() => { try { return localStorage.getItem("phonavi-theme"); } catch(e) { return null; } })();
+applyTheme(savedTheme === "dark");
+
 init();

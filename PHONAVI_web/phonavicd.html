@@ -4,17 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phonavi</title>
-  <link rel="stylesheet" href="phonavi.css">
+  <link rel="stylesheet" href="phonavicd.css">
   <link rel="stylesheet" href="mini-player.css">
 </head>
 
 <body>
   <div class="stage" id="stage">
-    <img
-      class="phonavi-logo"
-      src="IMAGES/REPRODUCTOR_PHONAVI/phonavi_logo_discoteca.png"
-      alt="Phonavi"
-    >
+    <div class="logo-row" id="logoRow">
+      <img
+        class="phonavi-logo"
+        src="IMAGES/REPRODUCTOR_PHONAVI/phonavi_logo_discoteca.png"
+        alt="Phonavi"
+      >
+      <button
+        class="theme-toggle"
+        id="themeToggle"
+        type="button"
+        aria-label="Cambiar tema"
+      ></button>
+    </div>
 
     <div class="spines" id="leftSpines"></div>
 
@@ -66,6 +74,6 @@
     <div class="spines" id="rightSpines"></div>
   </div>
 
-  <script src="phonavi.js"></script>
+  <script src="phonavicd.js"></script>
 </body>
 </html>

@@ -52,34 +52,120 @@ body {
   --offset-y: 5vh;
 }
 
-/* LOGO */
+/* LOGO ROW */
 
-.phonavi-logo {
+.logo-row {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 4px);
   transform: translateX(calc(var(--disc-size) * -0.5));
   transform-origin: left bottom;
-
-  height: clamp(16px, 5vw, 60px);
-  width: auto;
-
-  transition:  
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    left 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    bottom 220ms cubic-bezier(0.22, 1, 0.36, 1);
-
+  width: var(--disc-size);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   pointer-events: none;
   z-index: 5;
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    bottom 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.stage.dragging .phonavi-logo {
+.phonavi-logo {
+  height: clamp(16px, 5vw, 60px);
+  width: auto;
+  display: block;
+  pointer-events: none;
+  transition: 
+    height 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 300ms ease;
+}
+
+.stage.dragging .logo-row {
   transform: translateX(calc(var(--disc-size) * -0.5)) scale(calc(1 + (var(--elastic) * 0.08)));
 }
 
-.stage.dragging .phonavi-logo {
-  transform: translateX(calc(var(--disc-size) * -0.5)) scale(calc(1 + (var(--elastic) * 0.08)));
+/* THEME TOGGLE */
+
+.theme-toggle {
+  --size: calc(var(--disc-size) * 0.033);
+  width: var(--size);
+  height: var(--size);
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid #000;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #000;
+  transition:
+    border-color 300ms ease,
+    color 300ms ease,
+    transform 180ms ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.12);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle svg {
+  width: 55%;
+  height: 55%;
+  display: block;
+}
+
+/* DARK MODE */
+
+body.dark {
+  background: #000;
+}
+
+body.dark .phonavi-logo {
+  filter: invert(1);
+}
+
+body.dark .frontpng {
+  filter: invert(1);
+  transition: filter 300ms ease;
+}
+
+body.dark .spinepng {
+  filter: invert(1);
+  transition: filter 300ms ease;
+}
+
+body.dark .theme-toggle {
+  border-color: #fff;
+  color: #fff;
+}
+
+body.dark .meta-slide {
+  color: #fff;
+}
+
+body.dark .track-list li {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark .track-icon {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+body.dark .track-list .loading,
+body.dark .track-list .error,
+body.dark .track-list .empty {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* CENTRO */
