@@ -2,23 +2,17 @@
 **Repo:** https://github.com/diegotave/noticieromental  
 **Live:** https://diegotave.github.io/noticieromental/  
 **Autor:** Diego  
-**Stack:** HTML + CSS + JS vanilla, hosteado en GitHub Pages
+**Stack:** HTML + CSS + JS vanilla, GitHub Pages
 
-> **Pendiente:** renombrar repo a `phonavi` cuando quieras — Settings → Repository name.
-
----
-
-## Descripción general
-
-Sitio experimental / artístico. La home es una pantalla de videocasette con crawl del logo Phonavi y botones superpuestos en grilla 1920×1080 escalada. Desde ahí se navega a un carrusel de CDs (Phonavi CD) y a la radio.
+> **Pendiente:** renombrar repo `noticieromental` → `phonavi` en Settings.
 
 ---
 
 ## Mapa de navegación
 
 ```
-index.html  ←→  bitch3d.html  ←→  novaloramos.html  ←→  tuprimomarvin.html  ←→  sunset.html
-    ↑________________________________________________________________↓  (circular con flechas)
+index.html ←→ bitch3d.html ←→ novaloramos.html ←→ tuprimomarvin.html ←→ sunset.html
+    ↑_____________________________________________________________↓  (circular)
 
 index.html → PHONAVI_web/phonavicd.html   (botón Phonavi)
 index.html → radioantigua.html            (botón Radio)
@@ -31,14 +25,13 @@ index.html → [modal Acerca De]            (botón animado)
 
 - **Title:** Phonavi
 - **Fondo:** blanco
-- **Crawl:** logo `phonavi_logo_discoteca.png` × 8, 80px altura, `translateX` 20s infinito
-  - ⚠️ Provisorio — Diego lo va a reemplazar por una animación propia
-- **Video central:** `VIDEOS/videocasette.webm` — autoplay muted loop
-- **Sistema de escala:** stage `position:fixed` 1920×1080, `Math.min(vw/1920, vh/1080)`
+- **Crawl:** logo `phonavi_logo_discoteca.png` × 8, 80px, translateX 20s infinito — **PROVISORIO**, Diego lo reemplaza por animación propia
+- **Video central:** `VIDEOS/videocasette.webm` autoplay muted loop
+- **Sistema de escala:** stage fixed 1920×1080, `Math.min(vw/1920, vh/1080)`
 
 ### Botones del index
 
-| Botón | Stage ID | Posición (1920×1080) | JS |
+| Botón | Stage ID | Pos (1920×1080) | JS |
 |---|---|---|---|
 | Phonavi | `#phonavi-stage` | left:1400 top:728, 245×245px | `phonavi-boton.js` |
 | Radio | `#radio-stage` | left:1652 top:740, 241×215px | inline |
@@ -46,30 +39,34 @@ index.html → [modal Acerca De]            (botón animado)
 
 ---
 
-## Páginas de video (patrón compartido)
+## Páginas de video
 
-Todas usan el mismo CSS de flechas (triángulo magenta `#ff00b8`):
-
-| Página | Video | Izq | Der |
+| Página | Video | ← | → |
 |---|---|---|---|
 | `bitch3d.html` | `bitch3d.webm` | index | novaloramos |
 | `novaloramos.html` | `NOVALORAMOSVERS02.webm` | bitch3d | tuprimomarvin |
 | `tuprimomarvin.html` | `tuprimomarvin.webm` | novaloramos | sunset |
 | `sunset.html` | `Iambig.webm` | tuprimomarvin | index |
 
----
-
-## CSS compartido — `boton-acercade.css`
-
-- `#ui-stage` z-index:6 / `#phonavi-stage` z-index:4
-- Hit-area configurable: `--hit-x`, `--hit-y`, `--hit-w`, `--hit-h`
-- Debug: `--debug-hit-area: 1`
+Todas comparten el mismo CSS de flechas: triángulo magenta `#ff00b8`.
 
 ---
 
-## PHONAVI CD — `PHONAVI_web/phonavicd.html`
+## Identidad visual
 
-> Antes: `phonavi.html / .css / .js` → renombrado a `phonavicd.*`
+| | |
+|---|---|
+| Color principal | `#ff00b8` (magenta) |
+| Fondo home | blanco |
+| Fondo páginas video | negro |
+| Tipografía | `"Helvetica Neue", Helvetica, Arial, sans-serif` |
+| Grid base | 1920 × 1080px escalado |
+
+---
+
+## PHONAVI CD — `PHONAVI_web/phonavicd.*`
+
+> Antes se llamaba `phonavi.*` — renombrado a `phonavicd.*`
 
 ### Archivos
 ```
@@ -80,8 +77,8 @@ PHONAVI_web/
 ├── mini-player.css
 └── IMAGES/REPRODUCTOR_PHONAVI/
     ├── phonavi_logo_discoteca.png
-    ├── FRENTECD.png
-    └── LOMOCD5.png
+    ├── FRENTECD.png         ← no usado en nuevo carrusel (legacy)
+    └── LOMOCD5.png          ← spine de todos los CDs
 ```
 
 ### Storage — Cloudflare R2
@@ -93,103 +90,152 @@ PHONAVI_web/
   └── tracks.json
 ```
 
-### Álbumes actuales
+### Álbumes cargados
 
-| # | Artista | Álbum |
-|---|---|---|
-| 0 | Howe Gelb | Future Standards |
-| 1 | The Clash | London Calling |
-| 2 | Cindy Lauper | She's So Unusual |
-| 3 | Lady Gaga | MAYHEM |
-| 4 | The Beatles | Abbey Road |
-| 5 | Nirvana | Nevermind |
+| # | Artista | Álbum | Cover path R2 |
+|---|---|---|---|
+| 0 | Howe Gelb | Future Standards | `/CDS/Howe Gelb - Future Standards/Front.jpg` |
+| 1 | The Clash | London Calling | `/CDS/TheClash_London calling/cover.jpg` |
+| 2 | Cindy Lauper | She's So Unusual | `/CDS/Cindy Lauper - She/covercindy.jpg` |
+| 3 | Lady Gaga | MAYHEM | `/CDS/Lady Gaga - MAYHEM(2025)/cover1.jpg` |
+| 4 | The Beatles | Abbey Road | `/CDS/The Beatles - Abbey Road [320-Bubanee]/folder.jpg` |
+| 5 | Nirvana | Nevermind | `/CDS/Nirvana-nevermind/covernirvana.jpg` |
 
 ---
 
-## Carrusel — estado actual y pendientes
+## Carrusel — arquitectura actual
 
-### Arquitectura DOM
+### DOM
 ```
-#spineRail
-  └── .spine-slot (flex:0 0 auto)  × 25 landscape / 7 portrait
-        └── .spine-visual (height% animada por JS)
-              ├── .spine-cover-img (inset:0, object-fit:cover — cropeada por visual)
-              ├── .spine-png (LOMOCD5.png, z-index:1)
-              └── .spine-label (texto vertical, visible solo en .is-active)
-```
-
-### Comportamiento actual
-- **25 lomos** llenan el viewport en landscape (7 en portrait)
-- `flex:0 0 auto` → los slots se agrupan al ancho natural del LOMOCD5.png, sin expandirse
-- **Hover/touch:** el lomo bajo el cursor/dedo es el activo → crece, vecinos se abren levemente, preview aparece arriba
-- **Preselección limitada** a ±11 slots desde el centro del rail
-- **Dial giratorio:** RAF siempre corriendo, `albumOffset` avanza por posición X del cursor — 5 zonas simétricas:
-
-```
-normX zona        velocidad (álbumes/frame)
-0.45–0.55         0.0015   ← centro, casi quieto
-0.35–0.45/0.55–0.65  0.004
-0.25–0.35/0.65–0.75  0.009
-0.15–0.25/0.75–0.85  0.016
-0.00–0.15/0.85–1.00  0.026  ← bordes, más rápido
+#stage
+  ├── .logo-row              ← logo + botón tema
+  ├── #previewArea           ← miniatura flotante, z-index:20 (pisa el container)
+  │     └── #previewCover
+  └── #spineContainer        ← overflow:hidden, borde 2px, radius 12px
+        └── #spineRail       ← position:absolute, translateX animado
+              └── .spine-slot × (VISIBLE + EXTRA*2)
+                    └── .spine-visual
+                          ├── .spine-cover-img
+                          ├── .spine-png (LOMOCD5)
+                          └── .spine-label (texto vertical)
 ```
 
-- **Preview:** cover cuadrada (180px desktop / 110px portrait) flota sobre el lomo activo con fade
+### Constantes JS
 
-### Tamaños por distancia al activo ⚠️ PENDIENTE AFINAR
 ```js
-dist 0  → 115%   // activo
-dist 1  → 110%   // ±1
-dist 2  → 105%   // ±2
-dist 3+ → 100%   // resto (base)
-```
-Diego dice que "no termina de estar bien" — hay que seguir ajustando la relación de tamaños
-
-### Gaps por distancia (margins en px)
-```
-activo ↔ ±1:  3px total  (active: 1.5+1.5, ±1: 1.5 inner + 1.0 outer)
-±1    ↔ ±2:  2px total  (±1: 1.0 outer,   ±2: 1.0 inner + 0.5 outer)
-resto:        1px total  (0.5 + 0.5 cada slot)
+VISIBLE_LANDSCAPE   = 15    // slots visibles en landscape
+VISIBLE_PORTRAIT    = 15    // ídem portrait
+MAX_PRESEL_SIDE     = 6     // slots seleccionables c/lado del centro → slots 1–13
+MAX_PRESEL_PORTRAIT = 3
+EXTRA               = 2     // buffer slots fuera del container (c/lado)
 ```
 
-### Opacidades por distancia
-```
-dist 0    → 1.00
-dist 1–2  → 0.90
-dist 3–4  → 0.80
-resto     → 0.55
+Total slots en DOM = 15 + 2×2 = **19**. Los 2 extremos de cada lado son transición invisible.
+
+### Velocidades del dial (5 zonas simétricas)
+
+```js
+normX dist desde 0.5:
+< 0.10  →  0.009 álbumes/frame   (centro, casi quieto)
+< 0.20  →  0.030
+< 0.30  →  0.066
+< 0.40  →  0.135
+≥ 0.40  →  0.270                 (bordes, rápido)
 ```
 
-### CSS variables
+La velocidad se interpola con lerp factor 0.06 (`currentSpeed += (target - current) * 0.06`) — aceleración/desaceleración orgánica.
+
+### Selección y previsualización
+
+- El cursor mapea a `visibleIdx` (0..14) usando `getBoundingClientRect()` del container
+- Solo `visibleIdx` 1–13 son seleccionables (slots 0 y 14 = transición)
+- Al seleccionar: el lomo crece, se abren los gaps, aparece la miniatura encima
+- La miniatura (`#previewArea`) tiene `z-index: 20` y `bottom` ajustado para pisar el borde superior del container
+
+### Alturas por distancia al activo
+
+```js
+dist 0  →  98%   (activo, +13% sobre base)
+dist 1  →  89%   (±1, +4% sobre base)
+dist 2+ →  85%   (base)
+```
+
+### Opacidades
+
+```js
+dist 0  →  1.00
+dist 1  →  0.90
+dist 2  →  0.85
+dist ≤5 →  0.75
+resto   →  0.55
+sin hover → 0.70
+```
+
+### Márgenes (gaps entre lomos)
+
+```js
+base (inactivos):     2px c/lado = 4px total
+activo ↔ ±1:          6+6 = 12px (central doble)
+±1 ↔ ±2:              3.75+3.75 = 7.5px (lateral 1.5×)
+resto:                 2+2 = 4px
+```
+
+### Ancho del container
+
+Calculado una sola vez al init: `(spineW + 4) * 15 + 23px` (el +23 cubre la expansión máxima de márgenes cuando hay activo). Se resetea en resize.
+
+### Scroll suave (translateX continuo)
+
+```js
+// albumOffset es float; base = floor(offset), frac = offset - base
+shift = -(EXTRA * slotW) - (frac * slotW)
+rail.style.transform = `translateX(${shift}px)`
+```
+
+Albums se reasignan a los slots solo cuando `base` cambia (cruce de entero). Los 2 buffer slots absorben el swap fuera del viewport visible → sin saltos.
+
+### Preload
+
+Cuando `base` cambia, se precargan `total + 2` álbumes adelante para que las imágenes ya estén en caché al entrar al viewport.
+
+---
+
+## CSS variables clave
+
 ```css
---spine-height: 58vh
---preview-size: 180px
+--spine-height: 50.6vh      /* landscape */
+--spine-height: 50vh        /* portrait */
+--preview-size: 120px       /* landscape */
+--preview-size: 110px       /* portrait */
 --logo-h: clamp(16px, 4vw, 52px)
 ```
 
-### Modo oscuro
-- `body.dark` → fondo negro, `.phonavi-logo` + `.spine-png` → `filter: invert(1)`
-- Toggle luna/sol en SVG inline, persiste en `localStorage("phonavi-theme")`
-- `pointerdown` en el toggle tiene `stopPropagation()` para no activar el drag
+## Contenedor (#spineContainer)
+
+```css
+border: 2px solid #000    /* diurno */
+border-color: #fff         /* nocturno */
+background: white          /* diurno — igual al body */
+background: #000           /* nocturno — igual al body */
+border-radius: 12px
+```
+
+## Miniatura (#previewCover)
+
+```css
+border: 2px solid #000    /* mismos valores que el container */
+border-radius: 12px
+width/height: 120px
+```
 
 ---
 
-## Pendientes del carrusel
-- [ ] **Afinar tamaños** — el efecto de agrandado sobre la base 100% no está bien aún
-- [ ] **Abrir CD** — click en lomo: animación apertura, panel de tracks, reproducción (hook en `onSlotClick()` vacío)
-- [ ] Reconectar audio (desconectado del carrusel nuevo)
+## Modo oscuro
 
----
-
-## Identidad visual
-
-| Elemento | Valor |
-|---|---|
-| Color principal | `#ff00b8` (magenta) |
-| Fondo home | blanco |
-| Fondo páginas video | negro |
-| Tipografía | `"Helvetica Neue", Helvetica, Arial, sans-serif` |
-| Grid base | 1920 × 1080px escalado |
+- `body.dark` → fondo `#000`, `.phonavi-logo` + `.spine-png` → `filter: invert(1)`
+- Toggle luna(→ nocturno) / sol(→ diurno), SVG inline
+- `stopPropagation()` en `pointerdown` para no activar el carrusel
+- Persiste en `localStorage("phonavi-theme")`
 
 ---
 
@@ -198,29 +244,14 @@ resto     → 0.55
 ```
 noticieromental/   (futuro: phonavi/)
 ├── index.html
-├── bitch3d.html
-├── novaloramos.html
-├── tuprimomarvin.html
-├── sunset.html
+├── bitch3d.html / novaloramos.html / tuprimomarvin.html / sunset.html
 ├── radioantigua.html
-├── boton-acercade.css
-├── boton-acercade.js
-├── phonavi-boton.js
-├── BOTON/
-│   └── AcercaDe_00000.png … AcercaDe_00007.png
-├── VIDEOS/
-│   ├── videocasette.webm
-│   ├── bitch3d.webm
-│   ├── NOVALORAMOSVERS02.webm
-│   ├── tuprimomarvin.webm
-│   └── Iambig.webm
-├── assets/IMAGES/BOTONES/
-│   ├── BOTONTOPHONAVI.png / BOTONTOPHONAVI2.png
-│   └── botonradio_00.png / botonradio_01.png
+├── boton-acercade.css / boton-acercade.js / phonavi-boton.js
+├── BOTON/  AcercaDe_00000.png … AcercaDe_00007.png
+├── VIDEOS/  videocasette.webm / bitch3d.webm / NOVALORAMOSVERS02.webm / tuprimomarvin.webm / Iambig.webm
+├── assets/IMAGES/BOTONES/  BOTONTOPHONAVI.png / BOTONTOPHONAVI2.png / botonradio_00.png / botonradio_01.png
 └── PHONAVI_web/
-    ├── phonavicd.html
-    ├── phonavicd.css
-    ├── phonavicd.js
+    ├── phonavicd.html / phonavicd.css / phonavicd.js
     ├── mini-player.css
     └── IMAGES/REPRODUCTOR_PHONAVI/
         ├── phonavi_logo_discoteca.png
@@ -230,20 +261,13 @@ noticieromental/   (futuro: phonavi/)
 
 ---
 
-## Notas técnicas
-- GitHub Pages desde `main`, root `/`
-- `.glb` files en el repo sin uso activo
-- `mini-player.css` importado por `phonavicd.html`
-- Botón "Acerca De" en desktop solo anima, no navega a ningún lado
-- CSS de flechas duplicado en todas las páginas de video → candidato a refactor
+## Pendientes
 
----
-
-## Pendientes globales
-- [ ] Afinar tamaños del carrusel
-- [ ] Implementar apertura de CD (tracks + audio)
+- [ ] **Abrir CD** — click en lomo: animación apertura, panel de tracks, reproducción audio (`onSlotClick()` preparado pero vacío)
+- [ ] Reconectar audio (desconectado del nuevo carrusel)
 - [ ] Crawl home → animación propia (reemplazar logo estático)
 - [ ] Renombrar repo `noticieromental` → `phonavi`
+- [ ] `.glb` files (earth, pantalla_cine) en el repo sin uso activo
 
 ---
-*Contexto actualizado: 22/03/2026*
+*Contexto: 22/03/2026*
