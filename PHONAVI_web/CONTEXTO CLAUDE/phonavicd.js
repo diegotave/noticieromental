@@ -1,20 +1,20 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const VISIBLE_LANDSCAPE   = 37;
-const VISIBLE_PORTRAIT    = 37;
-const MAX_PRESEL_SIDE     = 12;
-const MAX_PRESEL_PORTRAIT = 6;
-const EXTRA               = 2;
+const VISIBLE_LANDSCAPE = 25;
+const VISIBLE_PORTRAIT  = 7;
+const MAX_PRESEL_SIDE   = 11;   // slots selectable each side of center
 
-// Dial speed — cursor position drives 5 zones, edge zones notably faster
+// Dial speed by zone (5 zones, symmetric)
+// normX [0,1] → albums/frame
+// zones: |0–0.2| slow-edge, |0.2–0.4| medium, |0.4–0.6| very-slow-center
 function dialSpeed(normX) {
-  const d = normX - 0.5;
+  const d = normX - 0.5;          // [-0.5 , 0.5]
   const a = Math.abs(d);
   let mag;
-  if      (a < 0.10) mag = 0.009;
-  else if (a < 0.20) mag = 0.030;
-  else if (a < 0.30) mag = 0.066;
-  else if (a < 0.40) mag = 0.135;
-  else               mag = 0.270;
+  if      (a < 0.10) mag = 0.0015;   // inner fifth: ultra slow
+  else if (a < 0.20) mag = 0.004;    // next band
+  else if (a < 0.30) mag = 0.009;    // middle-outer
+  else if (a < 0.40) mag = 0.016;    // outer band
+  else               mag = 0.026;    // edge fifth
   return Math.sign(d) * mag;
 }
 
@@ -42,49 +42,50 @@ function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
 function isPortrait(){ return window.innerWidth < window.innerHeight || window.innerWidth < 600; }
 function getVisible(){ return isPortrait() ? VISIBLE_PORTRAIT : VISIBLE_LANDSCAPE; }
 
-const rail = document.getElementById("spineRail");
-
 // ── HEIGHT by dist from active ─────────────────────────────────────────────
-// Inactive base = 85%. Active grows +10% over base = ~98%, ±1 +5% = ~89%
 function getHeight(dist){
-  if(dist === 0) return 98;
-  if(dist === 1) return 89;
-  return 85;
+  if(dist === 0) return 115;
+  if(dist === 1) return 110;
+  if(dist === 2) return 105;
+  return 100;
 }
 
 // ── OPACITY by dist ────────────────────────────────────────────────────────
 function getOpacity(dist){
-  return 1.00;
+  if(dist === 0) return 1.00;
+  if(dist <= 2)  return 0.90;
+  if(dist <= 4)  return 0.80;
+  return 0.55;
 }
 
 // ── MARGINS ───────────────────────────────────────────────────────────────────
-// Base: 2px each side = 4px between inactives
-// active ↔ ±1: was 6px → doubled = 12px  (active 6+6, ±1 inner 6)
-// ±1    ↔ ±2: was 5px → ×1.5   = 7.5px  (±1 outer 3.75, ±2 inner 3.75)
-// rest: 4px
+// Returns [marginLeft, marginRight] in px for slot i given activeSlot.
+// Base gap between any two slots = 0.5 + 0.5 = 1px.
+// active ↔ ±1 gap: 3px  → active gets 1.5 each side, ±1 gets 1.5 on inner side
+// ±1    ↔ ±2 gap: 2px  → ±1 gets 1.0 on outer side,  ±2 gets 1.0 on inner side
+// rest:            1px  → 0.5 each
 function getMargins(i, active){
-  if(active < 0) return [2, 2];
+  if(active < 0) return [0.5, 0.5];
   const dist = i - active;
-  if(dist ===  0) return [6,    6   ];
-  if(dist ===  1) return [6,    3.75];
-  if(dist === -1) return [3.75, 6   ];
-  if(dist ===  2) return [3.75, 2   ];
-  if(dist === -2) return [2,    3.75];
-  return [2, 2];
+  if(dist ===  0) return [1.5, 1.5];
+  if(dist ===  1) return [1.5, 1.0];
+  if(dist === -1) return [1.0, 1.5];
+  if(dist ===  2) return [1.0, 0.5];
+  if(dist === -2) return [0.5, 1.0];
+  return [0.5, 0.5];
 }
 
 // ── BUILD SLOTS ───────────────────────────────────────────────────────────────
 function buildSlots(){
+  const rail = document.getElementById("spineRail");
   rail.innerHTML = "";
   slots = [];
-  const visible = getVisible();
-  const total   = visible + EXTRA * 2;   // extra slots on each side
-
-  for(let i = 0; i < total; i++){
-    const slotEl = document.createElement("div");
+  const n = getVisible();
+  for(let i = 0; i < n; i++){
+    const slotEl   = document.createElement("div");
     slotEl.className = "spine-slot";
 
-    const visual = document.createElement("div");
+    const visual   = document.createElement("div");
     visual.className = "spine-visual";
 
     const coverImg = document.createElement("img");
@@ -95,7 +96,7 @@ function buildSlots(){
     spineImg.className = "spine-png";
     spineImg.alt = "";
 
-    const label = document.createElement("span");
+    const label    = document.createElement("span");
     label.className = "spine-label";
 
     visual.appendChild(coverImg);
@@ -104,124 +105,71 @@ function buildSlots(){
     slotEl.appendChild(visual);
     rail.appendChild(slotEl);
 
-    // visible slot index (EXTRA..EXTRA+visible-1), buffer slots have visibleIdx = -1
-    const visibleIdx = i - EXTRA;
-    slotEl.addEventListener("click", () => { if(visibleIdx >= 0) onSlotClick(visibleIdx); });
-    slots.push({ slotEl, visual, coverImg, spineImg, label, visibleIdx });
+    slotEl.addEventListener("click", () => onSlotClick(i));
+    slots.push({ slotEl, visual, coverImg, spineImg, label });
   }
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
-let lastBase     = -1;
-let targetSpeed  = 0;
-let currentSpeed = 0;
-
 function render(){
-  const visible = getVisible();
-  const total   = slots.length;   // visible + EXTRA*2
-  const base    = Math.floor(albumOffset);
-  const frac    = albumOffset - base;
+  const n    = slots.length;
+  const base = Math.round(albumOffset);
 
-  // albums: slot i shows album at (base - EXTRA + i)
-  if(base !== lastBase){
-    lastBase = base;
-    for(let i = 0; i < total + 2; i++){
-      const a = albums[mod(base - EXTRA + i, albums.length)];
-      if(!a._preloaded){
-        const img = new Image(); img.src = encodeURI(a.cover);
-        a._preloaded = true;
-      }
+  for(let i = 0; i < n; i++){
+    const { slotEl, visual, coverImg, spineImg, label } = slots[i];
+
+    // album for this slot
+    const albumIdx = mod(base + i, albums.length);
+    const album    = albums[albumIdx];
+
+    if(coverImg.dataset.src !== album.cover){
+      coverImg.src = encodeURI(album.cover);
+      coverImg.dataset.src = album.cover;
     }
-    for(let i = 0; i < total; i++){
-      const { coverImg, spineImg } = slots[i];
-      const album = albums[mod(base - EXTRA + i, albums.length)];
-      if(coverImg.dataset.src !== album.cover){
-        coverImg.src = encodeURI(album.cover);
-        coverImg.dataset.src = album.cover;
-      }
-      if(spineImg.dataset.src !== album.spine){
-        spineImg.src = album.spine;
-        spineImg.dataset.src = album.spine;
-      }
+    if(spineImg.dataset.src !== album.spine){
+      spineImg.src = album.spine;
+      spineImg.dataset.src = album.spine;
     }
-  }
 
-  // Measure actual spine visual width (LOMOCD5 natural width)
-  const refVisual = slots[EXTRA]?.visual;
-  const spineW    = refVisual ? refVisual.offsetWidth : 0;
-
-  if(spineW > 0){
-    const container = rail.parentElement;
-    if(!container.dataset.widthLocked){
-      // Max width = all slots at base margin (2+2=4px) + active open margins
-      // active adds extra: 6+6=12 on active, 6+3.75 on ±1, 3.75+2 on ±2
-      // Extra over base: (12-4) + 2*(6+3.75-4) + 2*(3.75+2-4) = 8 + 11.5 + 3.5 = 23px
-      const baseW  = (spineW + 4) * visible;   // all slots at 4px gap
-      const maxW   = baseW + 23;               // add max margin expansion
-      container.style.width = maxW + "px";
-      container.dataset.widthLocked = "1";
-    }
-    const slotW = spineW + 4;
-    const shift = -(EXTRA * slotW) - (frac * slotW);
-    rail.style.transform = `translateX(${shift.toFixed(2)}px)`;
-  }
-
-  // activeSlot is a visibleIdx (0..visible-1)
-  // maps to total slot index: totalIdx = activeSlot + EXTRA
-  for(let i = 0; i < total; i++){
-    const { slotEl, visual, label, visibleIdx } = slots[i];
-    const dist     = (activeSlot >= 0 && visibleIdx >= 0)
-                       ? Math.abs(visibleIdx - activeSlot) : -1;
+    const dist    = activeSlot >= 0 ? Math.abs(i - activeSlot) : -1;
     const isActive = dist === 0;
 
-    visual.style.height  = (dist >= 0 ? getHeight(dist) : 85) + "%";
-    visual.style.opacity = "1";
+    // height & opacity
+    visual.style.height  = (dist >= 0 ? getHeight(dist)  : 60)   + "%";
+    visual.style.opacity = (dist >= 0 ? getOpacity(dist) : 0.55).toFixed(2);
 
-    const [ml, mr] = (activeSlot >= 0 && visibleIdx >= 0)
-                       ? getMargins(visibleIdx, activeSlot) : [2, 2];
+    // margins
+    const [ml, mr] = getMargins(i, activeSlot);
     slotEl.style.marginLeft  = ml + "px";
     slotEl.style.marginRight = mr + "px";
 
+    // active label
     slotEl.classList.toggle("is-active", isActive);
-    const album = albums[mod(base - EXTRA + i, albums.length)];
     label.textContent = isActive ? `${album.artist}  —  ${album.title}` : "";
   }
 
-  // Preview
-  const previewArea   = document.getElementById("previewArea");
-  const previewCover  = document.getElementById("previewCover");
-  const previewArtist = document.getElementById("previewArtist");
-  const previewTitle  = document.getElementById("previewTitle");
-  const previewWrap   = document.getElementById("previewCoverWrap");
+  // preview
+  const previewArea  = document.getElementById("previewArea");
+  const previewCover = document.getElementById("previewCover");
 
   if(activeSlot >= 0 && pointerOn){
-    const totalIdx = activeSlot + EXTRA;
-    const album    = albums[mod(base - EXTRA + totalIdx, albums.length)];
+    const albumIdx = mod(base + activeSlot, albums.length);
+    const album    = albums[albumIdx];
     if(previewCover.dataset.src !== album.cover){
       previewCover.src = encodeURI(album.cover);
       previewCover.dataset.src = album.cover;
     }
-    previewArtist.textContent = album.artist;
-    previewTitle.textContent  = album.title;
-    const activeVisual = slots[totalIdx]?.visual;
-    if(activeVisual){
-      const rect = activeVisual.getBoundingClientRect();
-      previewArea.style.left   = (rect.left + rect.width / 2) + "px";
-      // gap = misma distancia que entre lomos adyacentes (active.marginRight + ±1.marginLeft = 6+6 = 12px)
-      previewArea.style.bottom = (window.innerHeight - rect.top + 12) + "px";
-    }
+    const leftPct = ((activeSlot + 0.5) / n * 100).toFixed(2);
+    previewArea.style.left = leftPct + "%";
     previewArea.classList.add("visible");
   } else {
     previewArea.classList.remove("visible");
   }
 }
 
-// ── RAF DIAL — eased speed for organic feel ───────────────────────────────────
+// ── RAF DIAL ──────────────────────────────────────────────────────────────────
 function tick(){
-  targetSpeed  = dialSpeed(normCursorX);
-  // ease current speed toward target (lerp factor 0.06 = smooth lag)
-  currentSpeed += (targetSpeed - currentSpeed) * 0.06;
-  albumOffset   = mod(albumOffset + currentSpeed, albums.length);
+  albumOffset = mod(albumOffset + dialSpeed(normCursorX), albums.length);
   render();
   rafId = requestAnimationFrame(tick);
 }
@@ -231,19 +179,15 @@ function onPointerMove(e){
   pointerOn   = true;
   normCursorX = clamp(e.clientX / window.innerWidth, 0, 1);
 
-  const visible = getVisible();
-  const maxSide = isPortrait() ? MAX_PRESEL_PORTRAIT : MAX_PRESEL_SIDE;
-  const container = rail.parentElement;
-  const rect    = container.getBoundingClientRect();
-  const relX    = e.clientX - rect.left;
-  const normInContainer = clamp(relX / rect.width, 0, 1);
+  // which slot is under cursor
+  const n     = slots.length;
+  const rawSlot = clamp(Math.floor(normCursorX * n), 0, n - 1);
 
-  // map to visible slot index
-  const rawSlot  = clamp(Math.floor(normInContainer * visible), 0, visible - 1);
-  const center   = Math.floor(visible / 2);
-  const inZone   = Math.abs(rawSlot - center) <= maxSide;
+  // limit preselection to MAX_PRESEL_SIDE each side of center
+  const center = Math.floor(n / 2);
+  const clamped = clamp(rawSlot, center - MAX_PRESEL_SIDE, center + MAX_PRESEL_SIDE);
 
-  activeSlot = inZone ? clamp(rawSlot, center - maxSide, center + maxSide) : -1;
+  activeSlot = clamped;
 }
 
 function onPointerLeave(){
@@ -252,9 +196,9 @@ function onPointerLeave(){
   activeSlot  = -1;
 }
 
-function onSlotClick(visibleIdx){
-  const base     = Math.floor(albumOffset);
-  const albumIdx = mod(base - EXTRA + visibleIdx + EXTRA, albums.length);
+function onSlotClick(i){
+  const base     = Math.round(albumOffset);
+  const albumIdx = mod(base + i, albums.length);
   console.log("Selected:", albums[albumIdx].artist, "-", albums[albumIdx].title);
   // open CD — next phase
 }
@@ -263,12 +207,7 @@ function onSlotClick(visibleIdx){
 let resizeTimer = null;
 function onResize(){
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    const container = rail.parentElement;
-    delete container.dataset.widthLocked;
-    buildSlots();
-    render();
-  }, 100);
+  resizeTimer = setTimeout(() => { buildSlots(); render(); }, 100);
 }
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
@@ -290,6 +229,7 @@ applyTheme(savedTheme === "dark");
 function init(){
   buildSlots();
   render();
+  const rail = document.getElementById("spineRail");
   rail.addEventListener("pointermove", onPointerMove);
   rail.addEventListener("pointerleave", onPointerLeave);
   window.addEventListener("resize", onResize);
