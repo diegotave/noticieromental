@@ -206,9 +206,7 @@ function render(){
     const activeVisual = slots[totalIdx]?.visual;
     if(activeVisual){
       const rect = activeVisual.getBoundingClientRect();
-      previewArea.style.left   = (rect.left + rect.width / 2) + "px";
-      // gap = misma distancia que entre lomos adyacentes (active.marginRight + ±1.marginLeft = 6+6 = 12px)
-      previewArea.style.bottom = (window.innerHeight - rect.top + 12) + "px";
+      previewArea.style.left = (rect.left + rect.width / 2) + "px";
     }
     previewArea.classList.add("visible");
   } else {
@@ -267,8 +265,18 @@ function onResize(){
     const container = rail.parentElement;
     delete container.dataset.widthLocked;
     buildSlots();
+    fixPreviewBottom();
     render();
   }, 100);
+}
+
+// ── PREVIEW BOTTOM — fijo, solo se recalcula en resize ────────────────────────
+// Se ancla al tope del container + 12px de gap (mismo gap que entre lomos adyacentes)
+function fixPreviewBottom(){
+  const container   = rail.parentElement;
+  const rect        = container.getBoundingClientRect();
+  const previewArea = document.getElementById("previewArea");
+  previewArea.style.bottom = (window.innerHeight - rect.top + 12) + "px";
 }
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
@@ -290,6 +298,8 @@ applyTheme(savedTheme === "dark");
 function init(){
   buildSlots();
   render();
+  // Esperar un frame para que el container tenga su posición final
+  requestAnimationFrame(() => fixPreviewBottom());
   rail.addEventListener("pointermove", onPointerMove);
   rail.addEventListener("pointerleave", onPointerLeave);
   window.addEventListener("resize", onResize);

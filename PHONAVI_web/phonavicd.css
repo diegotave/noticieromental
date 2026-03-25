@@ -80,7 +80,7 @@ body {
   pointer-events: none;
   z-index: 20;
   opacity: 0;
-  transition: left 80ms ease, bottom 80ms ease, opacity 200ms ease;
+  transition: left 80ms ease, opacity 200ms ease;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;

@@ -77,6 +77,7 @@ PHONAVI_web/
 ├── mini-player.css
 └── IMAGES/REPRODUCTOR_PHONAVI/
     ├── phonavi_logo_discoteca.png
+    ├── CAJACDMINI.png       ← overlay miniatura (PNG con transparencia)
     ├── FRENTECD.png         ← no usado en nuevo carrusel (legacy)
     └── LOMOCD5.png          ← spine de todos los CDs
 ```
@@ -103,129 +104,136 @@ PHONAVI_web/
 
 ---
 
-## Carrusel — arquitectura actual
-
-### DOM
-```
-#stage
-  ├── .logo-row              ← logo + botón tema
-  ├── #previewArea           ← miniatura flotante, z-index:20 (pisa el container)
-  │     └── #previewCover
-  └── #spineContainer        ← overflow:hidden, borde 2px, radius 12px
-        └── #spineRail       ← position:absolute, translateX animado
-              └── .spine-slot × (VISIBLE + EXTRA*2)
-                    └── .spine-visual
-                          ├── .spine-cover-img
-                          ├── .spine-png (LOMOCD5)
-                          └── .spine-label (texto vertical)
-```
+## Carrusel — estado actual
 
 ### Constantes JS
 
 ```js
-VISIBLE_LANDSCAPE   = 15    // slots visibles en landscape
-VISIBLE_PORTRAIT    = 15    // ídem portrait
-MAX_PRESEL_SIDE     = 6     // slots seleccionables c/lado del centro → slots 1–13
-MAX_PRESEL_PORTRAIT = 3
+VISIBLE_LANDSCAPE   = 37    // slots visibles landscape
+VISIBLE_PORTRAIT    = 37    // ídem portrait
+MAX_PRESEL_SIDE     = 12    // slots seleccionables c/lado del centro → zona activa 25 slots
+MAX_PRESEL_PORTRAIT = 6
 EXTRA               = 2     // buffer slots fuera del container (c/lado)
 ```
 
-Total slots en DOM = 15 + 2×2 = **19**. Los 2 extremos de cada lado son transición invisible.
+Total slots en DOM = 37 + 2×2 = **41**
 
 ### Velocidades del dial (5 zonas simétricas)
 
 ```js
 normX dist desde 0.5:
-< 0.10  →  0.009 álbumes/frame   (centro, casi quieto)
+< 0.10  →  0.009 álbumes/frame
 < 0.20  →  0.030
 < 0.30  →  0.066
 < 0.40  →  0.135
-≥ 0.40  →  0.270                 (bordes, rápido)
+≥ 0.40  →  0.270
 ```
 
-La velocidad se interpola con lerp factor 0.06 (`currentSpeed += (target - current) * 0.06`) — aceleración/desaceleración orgánica.
-
-### Selección y previsualización
-
-- El cursor mapea a `visibleIdx` (0..14) usando `getBoundingClientRect()` del container
-- Solo `visibleIdx` 1–13 son seleccionables (slots 0 y 14 = transición)
-- Al seleccionar: el lomo crece, se abren los gaps, aparece la miniatura encima
-- La miniatura (`#previewArea`) tiene `z-index: 20` y `bottom` ajustado para pisar el borde superior del container
+Lerp factor 0.06 — aceleración/desaceleración orgánica.
 
 ### Alturas por distancia al activo
 
 ```js
-dist 0  →  98%   (activo, +13% sobre base)
-dist 1  →  89%   (±1, +4% sobre base)
-dist 2+ →  85%   (base)
+dist 0  →  98%
+dist 1  →  89%
+dist 2+ →  85%
 ```
 
 ### Opacidades
 
-```js
-dist 0  →  1.00
-dist 1  →  0.90
-dist 2  →  0.85
-dist ≤5 →  0.75
-resto   →  0.55
-sin hover → 0.70
-```
+Todas en **1.0** — sin reducción por distancia, ni en hover ni en reposo.
 
 ### Márgenes (gaps entre lomos)
 
 ```js
 base (inactivos):     2px c/lado = 4px total
-activo ↔ ±1:          6+6 = 12px (central doble)
-±1 ↔ ±2:              3.75+3.75 = 7.5px (lateral 1.5×)
+activo ↔ ±1:          6+6 = 12px
+±1 ↔ ±2:              3.75+3.75 = 7.5px
 resto:                 2+2 = 4px
 ```
 
-### Ancho del container
+---
 
-Calculado una sola vez al init: `(spineW + 4) * 15 + 23px` (el +23 cubre la expansión máxima de márgenes cuando hay activo). Se resetea en resize.
+## CSS — estado actual
 
-### Scroll suave (translateX continuo)
+### Variables raíz
 
-```js
-// albumOffset es float; base = floor(offset), frac = offset - base
-shift = -(EXTRA * slotW) - (frac * slotW)
-rail.style.transform = `translateX(${shift}px)`
+```css
+--spine-height: 46.5vh;    /* landscape — 62vh × 0.75 */
+--preview-size: 140px;
+--logo-h: clamp(16px, 4vw, 52px);
+
+/* portrait */
+--spine-height: 41.25vh;
+--preview-size: 110px;
 ```
 
-Albums se reasignan a los slots solo cuando `base` cambia (cruce de entero). Los 2 buffer slots absorben el swap fuera del viewport visible → sin saltos.
+### #spineContainer
 
-### Preload
+```css
+border: none;              /* sin borde */
+border-radius: 12px;
+background: white / #000 (dark);
+margin-top: 20vh;          /* bajado 20% en pantalla */
+margin-inline: 12px;       /* contraído 12px c/lado */
+mask-image: fade lateral 12px c/lado;   /* feather costados */
+```
 
-Cuando `base` cambia, se precargan `total + 2` álbumes adelante para que las imágenes ya estén en caché al entrar al viewport.
+### Miniatura (#previewArea)
+
+- `position: absolute` en `#stage`
+- `bottom` fijo, calculado una sola vez en `fixPreviewBottom()` al init y en resize:
+  ```js
+  bottom = window.innerHeight - container.getBoundingClientRect().top + 12px
+  ```
+  → 12px = mismo gap que entre lomo activo y sus adyacentes
+- Solo `left` se actualiza en el RAF loop (no sube ni baja, solo se desplaza horizontal)
+- `transition: left 80ms ease, opacity 200ms ease`
+
+### #previewCoverWrap
+
+```css
+border-radius: 2px;
+overflow: hidden;
+```
+
+### #previewCover (tapa del disco)
+
+```css
+position: absolute;
+inset: 1px;                /* crop 1px c/lado */
+object-fit: cover;
+mask-image: fade 1px en los 4 bordes (mask-composite: intersect);
+```
+
+### #previewCaja (CAJACDMINI.png)
+
+```css
+position: relative;        /* flota z-index:1 sobre el cover */
+border-radius: 2px;
+width: var(--preview-size);
+height: auto;
+```
+
+### #previewText
+
+Artista y título del álbum activo, en blanco (dark) / negro (light), Helvetica, sobre el cover wrap.
 
 ---
 
-## CSS variables clave
+## DOM del preview
 
-```css
---spine-height: 50.6vh      /* landscape */
---spine-height: 50vh        /* portrait */
---preview-size: 120px       /* landscape */
---preview-size: 110px       /* portrait */
---logo-h: clamp(16px, 4vw, 52px)
-```
-
-## Contenedor (#spineContainer)
-
-```css
-border: 2px solid #000    /* diurno */
-border-color: #fff         /* nocturno */
-background: white          /* diurno — igual al body */
-background: #000           /* nocturno — igual al body */
-border-radius: 12px
-```
-
-## Miniatura (#previewCover)
-
-```css
-border: 2px solid #000    /* mismos valores que el container */
-border-radius: 12px
-width/height: 120px
+```html
+<div id="previewArea">
+  <div id="previewText">
+    <span id="previewArtist"></span>
+    <span id="previewTitle"></span>
+  </div>
+  <div id="previewCoverWrap">
+    <img id="previewCover" src="" alt="">
+    <img id="previewCaja" src="IMAGES/REPRODUCTOR_PHONAVI/CAJACDMINI.png" alt="">
+  </div>
+</div>
 ```
 
 ---
@@ -233,8 +241,7 @@ width/height: 120px
 ## Modo oscuro
 
 - `body.dark` → fondo `#000`, `.phonavi-logo` + `.spine-png` → `filter: invert(1)`
-- Toggle luna(→ nocturno) / sol(→ diurno), SVG inline
-- `stopPropagation()` en `pointerdown` para no activar el carrusel
+- Toggle luna / sol, SVG inline
 - Persiste en `localStorage("phonavi-theme")`
 
 ---
@@ -255,6 +262,7 @@ noticieromental/   (futuro: phonavi/)
     ├── mini-player.css
     └── IMAGES/REPRODUCTOR_PHONAVI/
         ├── phonavi_logo_discoteca.png
+        ├── CAJACDMINI.png
         ├── FRENTECD.png
         └── LOMOCD5.png
 ```
@@ -268,6 +276,7 @@ noticieromental/   (futuro: phonavi/)
 - [ ] Crawl home → animación propia (reemplazar logo estático)
 - [ ] Renombrar repo `noticieromental` → `phonavi`
 - [ ] `.glb` files (earth, pantalla_cine) en el repo sin uso activo
+- [ ] Verificar que CAJACDMINI.png tenga transparencia en la zona de la tapa para que el cover se vea por debajo
 
 ---
-*Contexto: 22/03/2026*
+*Contexto actualizado: 24/03/2026*
